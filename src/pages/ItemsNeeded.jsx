@@ -32,20 +32,20 @@ const ItemsNeeded = () => {
     if (error) return <div className="text-red-600 text-center p-8">Error loading items: {error}</div>
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
+        <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                         Items Needed
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                         Your donations make a real difference. Browse the items we need to spread joy this Christmas.
                     </p>
                 </div>
 
                 {/* Category Filter */}
-                <div className="flex flex-wrap gap-4 justify-center mb-12">
+                <div className="flex flex-wrap gap-3 justify-center mb-8">
                     {categories.map((category) => {
                         const stats = getCategoryStats(category.id)
 
@@ -53,10 +53,10 @@ const ItemsNeeded = () => {
                             <button
                                 key={category.id}
                                 onClick={() => setSelectedCategory(category.id)}
-                                className={`flex items-center px-6 py-3 rounded-full font-medium transition-all ${
+                                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
                                     selectedCategory === category.id
-                                        ? 'bg-primary-600 text-white shadow-lg'
-                                        : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
+                                        ? 'bg-primary-600 text-white shadow-sm'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                                 }`}
                             >
                                 {category.name}
@@ -66,8 +66,8 @@ const ItemsNeeded = () => {
                                             ? 'bg-white text-primary-600'
                                             : 'bg-gray-100 text-gray-600'
                                     }`}>
-                    {Math.round(calculateProgress(stats.totalCurrent, stats.totalTarget))}%
-                  </span>
+                                        {Math.round(calculateProgress(stats.totalCurrent, stats.totalTarget))}%
+                                    </span>
                                 )}
                             </button>
                         )
@@ -75,23 +75,23 @@ const ItemsNeeded = () => {
                 </div>
 
                 {/* Items Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {filteredItems.map((item) => {
                         const progress = calculateProgress(item.current_quantity, item.target_quantity)
                         const category = categories.find(cat => cat.id === item.category)
 
                         return (
-                            <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                            <Card key={item.id} className="hover:shadow-md transition-shadow border border-gray-200">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-lg">{item.name}</CardTitle>
+                                        <CardTitle className="text-base font-semibold">{item.name}</CardTitle>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                             item.priority === 'High' ? 'bg-red-100 text-red-800' :
                                                 item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
                                                     'bg-green-100 text-green-800'
                                         }`}>
-                      {item.priority}
-                    </span>
+                                            {item.priority}
+                                        </span>
                                     </div>
                                 </CardHeader>
 
@@ -107,12 +107,12 @@ const ItemsNeeded = () => {
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-gray-600">Progress</span>
                                                     <span className="font-medium">
-                            {item.current_quantity} / {item.target_quantity}
-                          </span>
+                                                        {item.current_quantity} / {item.target_quantity}
+                                                    </span>
                                                 </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-green-600 h-3 rounded-full transition-all duration-500"
+                                                        className="bg-green-600 h-2 rounded-full transition-all duration-500"
                                                         style={{ width: `${progress}%` }}
                                                     ></div>
                                                 </div>
@@ -130,7 +130,7 @@ const ItemsNeeded = () => {
                                     )}
 
                                     {item.category === 'Financial Support' && (
-                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
                                             <p className="text-sm text-primary-700 text-center">
                                                 Monetary donations help us purchase exactly what's needed
                                             </p>
@@ -143,14 +143,14 @@ const ItemsNeeded = () => {
                 </div>
 
                 {/* Donation Instructions */}
-                <Card className="bg-primary-50 border-primary-200">
-                    <CardContent className="p-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">
+                <Card className="bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
+                    <CardContent className="p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
                             How to Donate Items
                         </h2>
                         <div className="grid md:grid-cols-3 gap-6 text-center">
                             <div>
-                                <div className="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <div className="bg-primary-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3">
                                     <span className="font-bold text-primary-600">1</span>
                                 </div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Choose Items</h3>
@@ -160,7 +160,7 @@ const ItemsNeeded = () => {
                             </div>
 
                             <div>
-                                <div className="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <div className="bg-primary-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3">
                                     <span className="font-bold text-primary-600">2</span>
                                 </div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Prepare Donation</h3>
@@ -170,7 +170,7 @@ const ItemsNeeded = () => {
                             </div>
 
                             <div>
-                                <div className="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <div className="bg-primary-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3">
                                     <span className="font-bold text-primary-600">3</span>
                                 </div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Drop Off</h3>
