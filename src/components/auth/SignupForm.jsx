@@ -14,7 +14,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         phone: '',
         password: '',
         confirmPassword: '',
-        user_type: 'participant'
+        user_role: 'participant'
     })
     const [error, setError] = useState('')
 
@@ -44,7 +44,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                     data: {
                         full_name: formData.full_name,
                         phone: formData.phone,
-                        user_type: formData.user_type
+                        user_role: formData.user_role
                     }
                 }
             })
@@ -130,14 +130,14 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="user_type" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="user_role" className="block text-sm font-medium text-gray-700 mb-2">
                             I want to:
                         </label>
                         <select
-                            id="user_type"
+                            id="user_role"
                             required
-                            value={formData.user_type}
-                            onChange={(e) => setFormData({ ...formData, user_type: e.target.value })}
+                            value={formData.user_role}
+                            onChange={(e) => setFormData({ ...formData, user_role: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         >
                             <option value="participant">Receive Support</option>
