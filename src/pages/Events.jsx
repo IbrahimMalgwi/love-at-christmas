@@ -1,16 +1,19 @@
+// src/pages/Events.jsx
 import React, { useState } from 'react'
 import { Calendar, MapPin, Clock, Users, Plus } from 'lucide-react'
 import EventCalendar from '../components/events/EventCalendar'
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/Card'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
+import { useAuth } from '../hooks/useAuth'
 
 const Events = () => {
     const [selectedEvent, setSelectedEvent] = useState(null)
     const [showEventModal, setShowEventModal] = useState(false)
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const { isAdmin } = useAuth()
 
-    // Mock events data
+    // Mock events data - only upcoming events
     const events = [
         {
             id: 1,
@@ -69,6 +72,14 @@ const Events = () => {
         }
     ]
 
+    // Filter to show only upcoming events
+    const upcomingEvents = events.filter(event => {
+        const eventDate = new Date(event.date)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0) // Reset time to start of day for accurate comparison
+        return eventDate >= today
+    })
+
     const handleEventClick = (event) => {
         setSelectedEvent(event)
         setShowEventModal(true)
@@ -105,9 +116,10 @@ const Events = () => {
                     {/* Calendar Section */}
                     <div className="lg:col-span-2">
                         <EventCalendar
-                            events={events}
+                            events={upcomingEvents}
                             onEventClick={handleEventClick}
-                            onAddEvent={handleAddEvent}
+                            onAddEvent={isAdmin() ? handleAddEvent : null}
+                            isAdmin={isAdmin()}
                         />
                     </div>
 
@@ -119,7 +131,7 @@ const Events = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {events.slice(0, 3).map(event => (
+                                    {upcomingEvents.slice(0, 3).map(event => (
                                         <div
                                             key={event.id}
                                             className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 cursor-pointer transition-colors"
@@ -128,8 +140,8 @@ const Events = () => {
                                             <div className="flex justify-between items-start mb-2">
                                                 <h3 className="font-semibold text-gray-900">{event.title}</h3>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.type)}`}>
-                          {event.type}
-                        </span>
+                                                    {event.type}
+                                                </span>
                                             </div>
 
                                             <div className="space-y-2 text-sm text-gray-600">
@@ -163,43 +175,13 @@ const Events = () => {
                                     ))}
                                 </div>
 
-                                <Button variant="outline" className="w-full mt-4" onClick={handleAddEvent}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create New Event
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        {/* Quick Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Event Statistics</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Total Events</span>
-                                        <span className="font-semibold">{events.length}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Volunteer Slots</span>
-                                        <span className="font-semibold">
-                      {events.reduce((sum, event) => sum + event.registered, 0)}/
-                                            {events.reduce((sum, event) => sum + event.capacity, 0)}
-                    </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Upcoming This Week</span>
-                                        <span className="font-semibold">
-                      {events.filter(event => {
-                          const eventDate = new Date(event.date)
-                          const nextWeek = new Date()
-                          nextWeek.setDate(nextWeek.getDate() + 7)
-                          return eventDate <= nextWeek
-                      }).length}
-                    </span>
-                                    </div>
-                                </div>
+                                {/* Only show Create Event button for admin users */}
+                                {isAdmin() && (
+                                    <Button variant="outline" className="w-full mt-4" onClick={handleAddEvent}>
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Create New Event
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
@@ -214,8 +196,8 @@ const Events = () => {
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
                                 <span className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(selectedEvent.type)}`}>
-                  {selectedEvent.type}
-                </span>
+                                    {selectedEvent.type}
+                                </span>
                             </div>
                         </div>
 
@@ -277,103 +259,105 @@ const Events = () => {
                 )}
             </Modal>
 
-            {/* Create Event Modal */}
-            <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} size="lg">
-                <div className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Event</h2>
+            {/* Create Event Modal - Only accessible by admin */}
+            {isAdmin() && (
+                <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} size="lg">
+                    <div className="p-6">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Event</h2>
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Event Title
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Enter event title"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Date
+                                    Event Title
                                 </label>
                                 <input
-                                    type="date"
+                                    type="text"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    placeholder="Enter event title"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Time
+                                    </label>
+                                    <input
+                                        type="time"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Location
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    placeholder="Enter event location"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Time
+                                    Description
                                 </label>
-                                <input
-                                    type="time"
+                                <textarea
+                                    rows={4}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    placeholder="Describe the event"
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Location
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Enter event location"
-                            />
-                        </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Event Type
+                                    </label>
+                                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                        <option value="volunteer">Volunteer</option>
+                                        <option value="main">Main Event</option>
+                                        <option value="social">Social</option>
+                                        <option value="training">Training</option>
+                                    </select>
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Description
-                            </label>
-                            <textarea
-                                rows={4}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Describe the event"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Event Type
-                                </label>
-                                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                    <option value="volunteer">Volunteer</option>
-                                    <option value="main">Main Event</option>
-                                    <option value="social">Social</option>
-                                    <option value="training">Training</option>
-                                </select>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Capacity
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="Maximum attendees"
+                                    />
+                                </div>
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Capacity
-                                </label>
-                                <input
-                                    type="number"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                    placeholder="Maximum attendees"
-                                />
-                            </div>
+                        <div className="flex space-x-3 mt-6">
+                            <Button variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button className="flex-1">
+                                Create Event
+                            </Button>
                         </div>
                     </div>
-
-                    <div className="flex space-x-3 mt-6">
-                        <Button variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>
-                            Cancel
-                        </Button>
-                        <Button className="flex-1">
-                            Create Event
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
         </div>
     )
 }

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import Card, { CardHeader, CardTitle, CardContent } from '../common/Card'
 import Button from '../common/Button'
 
-const EventCalendar = ({ events = [], onEventClick, onAddEvent }) => {
+const EventCalendar = ({ events = [], onEventClick, onAddEvent, isAdmin = false }) => {
     const [currentDate, setCurrentDate] = useState(new Date())
 
     const today = new Date()
@@ -81,10 +81,13 @@ const EventCalendar = ({ events = [], onEventClick, onAddEvent }) => {
                             {monthNames[month]} {year}
                         </CardTitle>
                         <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm" onClick={() => onAddEvent()}>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Add Event
-                            </Button>
+                            {/* Only show Add Event button for admin users */}
+                            {isAdmin && onAddEvent && (
+                                <Button variant="outline" size="sm" onClick={() => onAddEvent()}>
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Event
+                                </Button>
+                            )}
                             <div className="flex space-x-1">
                                 <button
                                     onClick={() => navigateMonth(-1)}
