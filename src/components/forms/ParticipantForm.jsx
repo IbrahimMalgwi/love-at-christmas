@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '../../context/AuthContext'
 import { useParticipants } from '../../hooks/useData'
 import Button from '../common/Button'
 import Card from '../common/Card'

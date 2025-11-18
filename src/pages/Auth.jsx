@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import LoginForm from '../components/auth/LoginForm'
 import SignupForm from '../components/auth/SignupForm'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../context/AuthContext'
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true)

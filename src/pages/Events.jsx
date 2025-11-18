@@ -4,7 +4,7 @@ import EventCalendar from '../components/events/EventCalendar'
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/Card'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../context/AuthContext'
 
 const Events = () => {
     const [selectedEvent, setSelectedEvent] = useState(null)

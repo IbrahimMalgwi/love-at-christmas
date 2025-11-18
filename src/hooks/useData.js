@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { database, supabase } from '../services/supabaseClient'
-import { useAuth } from './useAuth'
+import { useAuth } from '../context/AuthContext'
 
 export const useParticipants = () => {
     const [data, setData] = useState([])

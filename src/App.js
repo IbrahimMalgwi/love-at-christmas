@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './hooks/useAuth'
+
+import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './hooks/useNotifications'
 import Layout from './components/layout/Layout'
 import SupportChat from './components/chat/SupportChat'
@@ -21,7 +22,7 @@ import Auth from './pages/Auth'
 
 function App() {
     return (
-        <NotificationProvider>
+        <NotificationProvider> {/* Move to top */}
             <AuthProvider>
                 <Router>
                     <Layout>
