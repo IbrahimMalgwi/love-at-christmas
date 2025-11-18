@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { database, supabase } from '../services/supabaseClient'
+import { supabase } from '../services/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 
 export const useParticipants = () => {
     const [data, setData] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
-    const { user, isVolunteer, isAdmin } = useAuth() // Get user here
+    const { user, isVolunteer, isAdmin } = useAuth()
 
     const fetchData = useCallback(async () => {
         if (!isVolunteer() && !isAdmin()) {
@@ -17,7 +17,10 @@ export const useParticipants = () => {
 
         try {
             setLoading(true)
-            const { data: result, error } = await database.getParticipants()
+            const { data: result, error } = await supabase
+                .from('participants')
+                .select('*')
+                .order('created_at', { ascending: false })
 
             if (error) throw error
             setData(result || [])
@@ -29,16 +32,45 @@ export const useParticipants = () => {
     }, [isVolunteer, isAdmin])
 
     const createParticipant = useCallback(async (participantData) => {
+        console.log('useParticipants: Creating participant with:', participantData)
+
         if (!user || (!isVolunteer() && !isAdmin())) {
             throw new Error('Unauthorized: Only volunteers and admins can register participants')
         }
 
-        const { data: result, error } = await database.createParticipant(participantData, user.id)
+        try {
+            // Add required fields
+            const dataToInsert = {
+                ...participantData,
+                registered_by: user.id,
+                status: 'pending'
+            }
 
-        if (error) throw error
-        await fetchData()
-        return result
-    }, [user, isVolunteer, isAdmin, fetchData])
+            console.log('useParticipants: Inserting data:', dataToInsert)
+
+            const { data: result, error } = await supabase
+                .from('participants')
+                .insert([dataToInsert])
+                .select()
+                .single()
+
+            if (error) {
+                console.error('useParticipants: Supabase error:', error)
+                throw error
+            }
+
+            console.log('useParticipants: Participant created successfully:', result)
+
+            // Update local state without refetching to avoid loops
+            setData(prev => [result, ...prev])
+
+            return result
+
+        } catch (err) {
+            console.error('useParticipants: Error in createParticipant:', err)
+            throw err
+        }
+    }, [user, isVolunteer, isAdmin]) // Removed fetchData dependency
 
     useEffect(() => {
         fetchData()
@@ -61,7 +93,10 @@ export const useVolunteers = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true)
-            const { data: result, error } = await database.getVolunteers()
+            const { data: result, error } = await supabase
+                .from('volunteers')
+                .select('*')
+                .order('created_at', { ascending: false })
 
             if (error) throw error
             setData(result || [])
@@ -87,7 +122,10 @@ export const useItems = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true)
-            const { data: result, error } = await database.getItems()
+            const { data: result, error } = await supabase
+                .from('items_needed')
+                .select('*')
+                .order('created_at', { ascending: false })
 
             if (error) throw error
             setData(result || [])
@@ -120,12 +158,15 @@ export const useEvents = () => {
     const [data, setData] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
-    const { user } = useAuth() // Get user here
+    const { user } = useAuth()
 
     const fetchData = useCallback(async () => {
         try {
             setLoading(true)
-            const { data: result, error } = await database.getEvents()
+            const { data: result, error } = await supabase
+                .from('events')
+                .select('*')
+                .order('event_date', { ascending: true })
 
             if (error) throw error
             setData(result || [])
@@ -141,7 +182,17 @@ export const useEvents = () => {
             throw new Error('You must be logged in to register for events')
         }
 
-        const { data: result, error } = await database.registerForEvent(eventId, user.id)
+        const { data: result, error } = await supabase
+            .from('event_registrations')
+            .insert([
+                {
+                    event_id: eventId,
+                    user_id: user.id,
+                    status: 'registered'
+                }
+            ])
+            .select()
+            .single()
 
         if (error) throw error
         return result

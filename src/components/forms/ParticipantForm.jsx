@@ -19,6 +19,11 @@ const ParticipantForm = ({ onSuccess }) => {
         religion: ''
     })
 
+    // Debug loading state
+    React.useEffect(() => {
+        console.log('🔧 Loading state changed:', loading)
+    }, [loading])
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -28,14 +33,10 @@ const ParticipantForm = ({ onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        console.log('🚀 Form submitted - setting loading to true')
 
-        // Check authorization
-        if (!isVolunteer() && !isAdmin()) {
-            addNotification({
-                type: 'error',
-                title: 'Unauthorized',
-                message: 'Only volunteers and administrators can register participants.'
-            })
+        if (loading) {
+            console.log('⚠️ Already loading, ignoring submit')
             return
         }
 
@@ -43,14 +44,24 @@ const ParticipantForm = ({ onSuccess }) => {
 
         try {
             const participantData = {
-                ...formData,
-                user_id: user?.id, // Link to auth user if they want to login later
-                age: parseInt(formData.age)
+                full_name: formData.full_name,
+                phone_number: formData.phone_number,
+                address: formData.address,
+                sex: formData.sex,
+                age: parseInt(formData.age),
+                religion: formData.religion,
+                user_id: user?.id,
+                registered_by: user?.id
             }
 
+            console.log('📤 Using hook to create participant:', participantData)
+
+            // Use the hook instead of direct Supabase
             const data = await createParticipant(participantData)
 
-            // Reset form
+            console.log('✅ Hook creation successful:', data)
+
+            // Reset form and show success
             setFormData({
                 full_name: '',
                 phone_number: '',
@@ -60,23 +71,27 @@ const ParticipantForm = ({ onSuccess }) => {
                 religion: ''
             })
 
-            if (onSuccess) {
-                onSuccess(data)
-            }
+            console.log('🔄 Form reset - showing success notification')
 
             addNotification({
                 type: 'success',
                 title: 'Registration successful!',
                 message: 'Participant has been registered successfully.'
             })
+
+            if (onSuccess) {
+                onSuccess(data)
+            }
+
         } catch (error) {
-            console.error('Error registering participant:', error)
+            console.error('❌ Registration failed:', error)
             addNotification({
                 type: 'error',
                 title: 'Registration failed',
                 message: error.message || 'Please try again.'
             })
         } finally {
+            console.log('🏁 Finally block - setting loading to false')
             setLoading(false)
         }
     }
@@ -197,33 +212,45 @@ const ParticipantForm = ({ onSuccess }) => {
                             />
                         </div>
 
-                        {/* Religion */}
+                        {/* Religion - Updated to Dropdown */}
                         <div>
                             <label htmlFor="religion" className="block text-sm font-medium text-gray-700 mb-2">
                                 Religion *
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 id="religion"
                                 name="religion"
                                 required
                                 value={formData.religion}
                                 onChange={handleChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Religion"
-                            />
+                            >
+                                <option value="">Select religion</option>
+                                <option value="Christianity">Christianity</option>
+                                <option value="Islam">Islam</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                     </div>
 
                     {/* Submit Button */}
-                    <Button
-                        type="submit"
-                        loading={loading}
-                        className="w-full"
-                        size="lg"
-                    >
-                        Register Participant
-                    </Button>
+                    <div>
+                        <Button
+                            type="submit"
+                            loading={loading}
+                            className="w-full"
+                            size="lg"
+                        >
+                            Register Participant
+                        </Button>
+                        <div className="text-xs text-gray-500 mt-1 text-center">
+                            Debug: loading = {loading.toString()}, form empty = {
+                            !formData.full_name &&
+                            !formData.phone_number &&
+                            !formData.address ? 'true' : 'false'
+                        }
+                        </div>
+                    </div>
 
                     <p className="text-sm text-gray-600 text-center">
                         Registered by: {user?.email} • {new Date().toLocaleDateString()}
