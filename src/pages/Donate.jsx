@@ -1,64 +1,29 @@
-// src/pages/Donate
-import React, { useState } from 'react'
-import { CreditCard, Landmark, QrCode, Shield, Gift, Heart } from 'lucide-react'
-// Replace Bank with Landmark which is the correct icon for bank
+// src/pages/Donate.js
+import React from 'react'
+import { Landmark, Copy, } from 'lucide-react'
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/Card'
-import Button from '../components/common/Button'
 
 const Donate = () => {
-    const [donationAmount, setDonationAmount] = useState('')
-    const [selectedMethod, setSelectedMethod] = useState('bank')
+    const bankDetails = {
+        bankName: 'Zenith Bank PLC',
+        accountName: 'Sabo Foursquare Gospel Church',
+        accountNumber: '1010761266',
+        narration: 'Love AT Christmas'
+    }
 
-    const presetAmounts = [25, 50, 100, 250, 500]
-
-    const paymentMethods = [
-        {
-            id: 'bank',
-            name: 'Bank Transfer',
-            icon: Landmark, // Changed from Bank to Landmark
-            description: 'Direct bank transfer to our account',
-            details: {
-                bankName: 'Unity Trust Bank',
-                accountName: 'Love At Christmas Foundation',
-                accountNumber: '1234567890',
-                routingNumber: '021000021'
-            }
-        },
-        {
-            id: 'card',
-            name: 'Credit/Debit Card',
-            icon: CreditCard,
-            description: 'Secure online payment',
-            details: {
-                supported: 'Visa, MasterCard, American Express',
-                security: 'PCI DSS Compliant'
-            }
-        },
-        {
-            id: 'qr',
-            name: 'QR Code Payment',
-            icon: QrCode,
-            description: 'Scan to pay instantly',
-            details: {
-                apps: 'Venmo, PayPal, Cash App',
-                instruction: 'Scan the QR code with your payment app'
-            }
+    const copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text)
+            // You could add a toast notification here for better UX
+            alert('Copied to clipboard!')
+        } catch (err) {
+            console.error('Failed to copy text: ', err)
         }
-    ]
-
-    const impactLevels = [
-        { amount: 25, impact: 'Provides a Christmas meal for one family' },
-        { amount: 50, impact: 'Buys warm clothing for two children' },
-        { amount: 100, impact: 'Supports gift packages for three families' },
-        { amount: 250, impact: 'Funds educational materials for a month' },
-        { amount: 500, impact: 'Sponsors an entire family for Christmas' }
-    ]
-
-    const selectedMethodData = paymentMethods.find(method => method.id === selectedMethod)
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -70,257 +35,181 @@ const Donate = () => {
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Donation Form */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Amount Selection */}
+                    {/* Bank Details */}
+                    <div className="lg:col-span-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Select Donation Amount</CardTitle>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Landmark className="h-6 w-6 text-primary-600" />
+                                    Bank Transfer Details
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-6">
-                                    {/* Preset Amounts */}
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                        {presetAmounts.map(amount => (
-                                            <button
-                                                key={amount}
-                                                onClick={() => setDonationAmount(amount.toString())}
-                                                className={`p-4 rounded-lg border-2 text-center font-semibold transition-all ${
-                                                    donationAmount === amount.toString()
-                                                        ? 'border-primary-600 bg-primary-50 text-primary-700'
-                                                        : 'border-gray-200 hover:border-primary-300 text-gray-700'
-                                                }`}
-                                            >
-                                                ${amount}
-                                            </button>
-                                        ))}
+                                    {/* Bank Information */}
+                                    <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">
+                                                    Bank Name
+                                                </label>
+                                                <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                                    <span className="font-semibold text-gray-900">{bankDetails.bankName}</span>
+                                                    <button
+                                                        onClick={() => copyToClipboard(bankDetails.bankName)}
+                                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                        title="Copy to clipboard"
+                                                    >
+                                                        <Copy className="h-4 w-4 text-gray-500" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">
+                                                    Account Name
+                                                </label>
+                                                <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                                    <span className="font-semibold text-gray-900">{bankDetails.accountName}</span>
+                                                    <button
+                                                        onClick={() => copyToClipboard(bankDetails.accountName)}
+                                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                        title="Copy to clipboard"
+                                                    >
+                                                        <Copy className="h-4 w-4 text-gray-500" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                                Account Number
+                                            </label>
+                                            <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                                <span className="font-semibold text-gray-900 text-lg">{bankDetails.accountNumber}</span>
+                                                <button
+                                                    onClick={() => copyToClipboard(bankDetails.accountNumber)}
+                                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                    title="Copy to clipboard"
+                                                >
+                                                    <Copy className="h-4 w-4 text-gray-500" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                                Narration / Description
+                                            </label>
+                                            <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                                <span className="font-semibold text-gray-900">{bankDetails.narration}</span>
+                                                <button
+                                                    onClick={() => copyToClipboard(bankDetails.narration)}
+                                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                    title="Copy to clipboard"
+                                                >
+                                                    <Copy className="h-4 w-4 text-gray-500" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* Custom Amount */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Or enter custom amount
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-                                            <input
-                                                type="number"
-                                                value={donationAmount}
-                                                onChange={(e) => setDonationAmount(e.target.value)}
-                                                placeholder="0.00"
-                                                className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                            />
-                                        </div>
+                                    {/* Instructions */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <h3 className="font-semibold text-blue-900 mb-2">Transfer Instructions</h3>
+                                        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                                            <li>Use the account details above for bank transfers</li>
+                                            <li>Include "<strong>{bankDetails.narration}</strong>" as the transfer description</li>
+                                            <li>Transfers are processed within 24 hours</li>
+                                            <li>You will receive a confirmation email once processed</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* Additional Information */}
+                                    <div className="text-center text-gray-600">
+                                        <p className="text-sm">
+                                            For international transfers or any questions, please contact us at{' '}
+                                            <a href="mailto:finance@loveatchristmas.org" className="text-primary-600 hover:underline">
+                                                finance@loveatchristmas.org
+                                            </a>
+                                        </p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {/* Payment Method */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Payment Method</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {paymentMethods.map(method => {
-                                        const Icon = method.icon
-                                        return (
-                                            <div
-                                                key={method.id}
-                                                onClick={() => setSelectedMethod(method.id)}
-                                                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                                    selectedMethod === method.id
-                                                        ? 'border-primary-600 bg-primary-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                <div className="flex items-center space-x-4">
-                                                    <div className={`p-2 rounded-lg ${
-                                                        selectedMethod === method.id ? 'bg-primary-600' : 'bg-gray-100'
-                                                    }`}>
-                                                        <Icon className={`h-6 w-6 ${
-                                                            selectedMethod === method.id ? 'text-white' : 'text-gray-600'
-                                                        }`} />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-semibold text-gray-900">{method.name}</h3>
-                                                        <p className="text-sm text-gray-600">{method.description}</p>
-                                                    </div>
-                                                    <div className={`w-5 h-5 rounded-full border-2 ${
-                                                        selectedMethod === method.id
-                                                            ? 'border-primary-600 bg-primary-600'
-                                                            : 'border-gray-300'
-                                                    }`}></div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Payment Details */}
-                        {selectedMethodData && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>{selectedMethodData.name} Details</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {selectedMethod.id === 'bank' && (
-                                        <div className="space-y-4">
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Bank Name:</span>
-                                                        <span className="font-semibold">{selectedMethodData.details.bankName}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Account Name:</span>
-                                                        <span className="font-semibold">{selectedMethodData.details.accountName}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Account Number:</span>
-                                                        <span className="font-semibold">{selectedMethodData.details.accountNumber}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Routing Number:</span>
-                                                        <span className="font-semibold">{selectedMethodData.details.routingNumber}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                Please include your name as reference when making the transfer.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {selectedMethod.id === 'card' && (
-                                        <div className="space-y-4">
-                                            <div className="grid md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Card Number
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="1234 5678 9012 3456"
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Expiry Date
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="MM/YY"
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        CVV
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="123"
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Name on Card
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="John Doe"
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                <Shield className="h-4 w-4 text-green-500" />
-                                                <span>Your payment is secure and encrypted</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedMethod.id === 'qr' && (
-                                        <div className="text-center space-y-4">
-                                            <div className="bg-white p-8 rounded-lg border-2 border-dashed border-gray-300 inline-block">
-                                                <QrCode className="h-32 w-32 text-gray-400 mx-auto" />
-                                                <p className="text-sm text-gray-500 mt-2">QR Code Display</p>
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                Scan this QR code with your preferred payment app to complete your donation.
-                                            </p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Donate Button */}
-                        <Button size="lg" className="w-full" disabled={!donationAmount}>
-                            <div className="flex items-center justify-center">
-                                <Heart className="h-5 w-5 mr-2" />
-                                Donate ${donationAmount || '0'}
-                            </div>
-                        </Button>
                     </div>
 
-                    {/* Impact Sidebar */}
+                    {/* Impact & Security Sidebar */}
                     <div className="space-y-6">
+                        {/* Impact Information */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Your Impact</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {impactLevels.map(level => (
-                                        <div
-                                            key={level.amount}
-                                            className={`p-4 rounded-lg border-2 transition-all ${
-                                                donationAmount === level.amount.toString()
-                                                    ? 'border-primary-600 bg-primary-50'
-                                                    : 'border-gray-200'
-                                            }`}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <Gift className="h-5 w-5 text-primary-600" />
-                                                <div>
-                                                    <div className="font-semibold text-gray-900">${level.amount}</div>
-                                                    <div className="text-sm text-gray-600">{level.impact}</div>
-                                                </div>
-                                            </div>
+                                    <div className="p-3 rounded-lg border border-gray-200">
+                                        <div className="font-semibold text-gray-900">Every Donation Helps</div>
+                                        <div className="text-sm text-gray-600 mt-1">
+                                            Your contribution directly supports families in need during the Christmas season.
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div className="p-3 rounded-lg border border-gray-200">
+                                        <div className="font-semibold text-gray-900">100% Transparent</div>
+                                        <div className="text-sm text-gray-600 mt-1">
+                                            We provide regular updates on how donations are being used in our community.
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-primary-50 border-primary-200">
-                            <CardContent className="p-6">
-                                <div className="text-center">
-                                    <Shield className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-                                    <h3 className="font-semibold text-gray-900 mb-2">Secure & Transparent</h3>
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        Every dollar is accounted for and directly supports our programs.
-                                    </p>
-                                    <div className="space-y-2 text-sm text-gray-600">
-                                        <div className="flex justify-between">
-                                            <span>Program Expenses</span>
-                                            <span className="font-semibold">85%</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Administrative</span>
-                                            <span className="font-semibold">10%</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Fundraising</span>
-                                            <span className="font-semibold">5%</span>
-                                        </div>
+                        {/* Security & Transparency */}
+                        {/*<Card className="bg-primary-50 border-primary-200">*/}
+                        {/*    <CardContent className="p-6">*/}
+                        {/*        <div className="text-center">*/}
+                        {/*            <Shield className="h-12 w-12 text-primary-600 mx-auto mb-4" />*/}
+                        {/*            <h3 className="font-semibold text-gray-900 mb-2">Secure & Accountable</h3>*/}
+                        {/*            <p className="text-sm text-gray-600 mb-4">*/}
+                        {/*                Your donations are handled with the highest level of security and transparency.*/}
+                        {/*            </p>*/}
+                        {/*            <div className="space-y-2 text-sm text-gray-600">*/}
+                        {/*                <div className="flex justify-between">*/}
+                        {/*                    <span>Direct Support</span>*/}
+                        {/*                    <span className="font-semibold">85%</span>*/}
+                        {/*                </div>*/}
+                        {/*                <div className="flex justify-between">*/}
+                        {/*                    <span>Program Operations</span>*/}
+                        {/*                    <span className="font-semibold">10%</span>*/}
+                        {/*                </div>*/}
+                        {/*                <div className="flex justify-between">*/}
+                        {/*                    <span>Administrative</span>*/}
+                        {/*                    <span className="font-semibold">5%</span>*/}
+                        {/*                </div>*/}
+                        {/*            </div>*/}
+                        {/*        </div>*/}
+                        {/*    </CardContent>*/}
+                        {/*</Card>*/}
+
+                        {/* Contact Information */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Need Help?</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-3 text-sm">
+                                    <div>
+                                        <div className="font-semibold text-gray-900">Email</div>
+                                        <a href="mailto:donations@loveatchristmas.org" className="text-primary-600 hover:underline">
+                                            donations@loveatchristmas.org
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-gray-900">Phone</div>
+                                        <a href="tel:+1234567890" className="text-primary-600 hover:underline">
+                                            +1 (234) 567-890
+                                        </a>
                                     </div>
                                 </div>
                             </CardContent>

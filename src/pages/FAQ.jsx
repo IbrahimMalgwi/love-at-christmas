@@ -29,7 +29,7 @@ const FAQ = () => {
                 {
                     id: 2,
                     question: 'When and where is the event held?',
-                    answer: 'The main event is typically held in the third week of December at multiple locations across the city. Specific dates and venues for Love At Christmas 2025 will be announced in October 2025. Please check our website regularly for updates.'
+                    answer: 'The main event is typically held in December at Foursquare Gospel Church Sabo, 32A Commercial Avenue Sabo Yaba, Lagos Nigeria.'
                 },
                 {
                     id: 3,
@@ -74,11 +74,6 @@ const FAQ = () => {
                     id: 8,
                     question: 'Where can I drop off donated items?',
                     answer: 'We have multiple drop-off locations throughout the city. You can find the nearest location and operating hours on our website. For large donations, we may be able to arrange pickup - please contact us in advance.'
-                },
-                {
-                    id: 9,
-                    question: 'Are financial donations tax-deductible?',
-                    answer: 'Yes, Love At Christmas is a registered 501(c)(3) nonprofit organization. All financial donations are tax-deductible to the extent allowed by law. You will receive a receipt for your records.'
                 }
             ]
         },
@@ -90,17 +85,12 @@ const FAQ = () => {
                 {
                     id: 10,
                     question: 'How are financial donations used?',
-                    answer: '85% of donations go directly to program expenses (purchasing gifts, food, and supplies), 10% covers administrative costs, and 5% supports fundraising efforts. We are committed to transparency and provide detailed financial reports annually.'
+                    answer: '100% of donations go directly to program expenses (purchasing gifts, food, and supplies). We are committed to transparency and provide detailed financial reports annually.'
                 },
                 {
                     id: 11,
                     question: 'What payment methods do you accept?',
-                    answer: 'We accept bank transfers, credit/debit cards (Visa, MasterCard, American Express), and QR code payments through various mobile apps. All payment methods are secure and encrypted.'
-                },
-                {
-                    id: 12,
-                    question: 'Can I set up recurring donations?',
-                    answer: 'Yes! We offer monthly recurring donation options. This helps us maintain consistent support throughout the year and plan our programs more effectively. You can set this up through our donation page.'
+                    answer: 'We accept bank transfers to our account with the description LOVE AT CHRISTMAS 2025 or Cash donations @ Foursquare Gospel Church Sabo.'
                 }
             ]
         },
@@ -112,12 +102,12 @@ const FAQ = () => {
                 {
                     id: 13,
                     question: 'How can my family receive support?',
-                    answer: 'Families can register through our participant registration form on the website. After registration, our team will review applications and contact eligible families with event details and next steps.'
+                    answer: 'Everyone who is present on the day will receive a gift for Christmas.'
                 },
                 {
                     id: 14,
                     question: 'Do you serve specific areas or is it city-wide?',
-                    answer: 'We serve the entire metropolitan area through multiple distribution centers and partner locations. We strive to make our services accessible to all communities within the city and surrounding areas.'
+                    answer: 'Everyone with the city is welcome to share the love of Christ with us.'
                 },
                 {
                     id: 15,

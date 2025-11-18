@@ -1,30 +1,30 @@
 import React from 'react'
-import { Heart, Target, Eye, Users, Clock, MapPin } from 'lucide-react'
+import { Heart, Target, Eye, Clock, MapPin } from 'lucide-react'
 import Card from '../components/common/Card'
 
 const About = () => {
-    const team = [
-        {
-            name: 'Sarah Johnson',
-            role: 'Founder & Director',
-            description: 'Passionate about community service with 10+ years of experience in nonprofit management.'
-        },
-        {
-            name: 'Michael Chen',
-            role: 'Volunteer Coordinator',
-            description: 'Dedicated to organizing and mobilizing volunteers for maximum impact.'
-        },
-        {
-            name: 'Maria Rodriguez',
-            role: 'Community Outreach',
-            description: 'Building strong relationships with local communities and partners.'
-        },
-        {
-            name: 'David Thompson',
-            role: 'Operations Manager',
-            description: 'Ensuring smooth execution of all event logistics and operations.'
-        }
-    ]
+    // const team = [
+    //     {
+    //         name: 'Ebi',
+    //         role: 'Founder & Director',
+    //         description: 'Passionate about community service with 10+ years of experience in nonprofit management.'
+    //     },
+    //     {
+    //         name: 'Michael Chen',
+    //         role: 'Volunteer Coordinator',
+    //         description: 'Dedicated to organizing and mobilizing volunteers for maximum impact.'
+    //     },
+    //     {
+    //         name: 'Maria Rodriguez',
+    //         role: 'Community Outreach',
+    //         description: 'Building strong relationships with local communities and partners.'
+    //     },
+    //     {
+    //         name: 'David Thompson',
+    //         role: 'Operations Manager',
+    //         description: 'Ensuring smooth execution of all event logistics and operations.'
+    //     }
+    // ]
 
     const milestones = [
         { year: '2018', event: 'First Love At Christmas event with 200 participants' },
@@ -45,7 +45,7 @@ const About = () => {
                         About Love At Christmas
                     </h1>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                        For over 8 years, we've been bringing hope and joy to families in need during
+                        For over 3 years, we've been bringing hope and joy to families in need during
                         the Christmas season through community support, donations, and volunteer efforts.
                     </p>
                 </div>
@@ -109,21 +109,21 @@ const About = () => {
                 </section>
 
                 {/* Team Section */}
-                <section className="mb-16">
-                    <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Our Team</h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {team.map((member, index) => (
-                            <Card key={index} className="p-6 text-center">
-                                <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Users className="h-10 w-10 text-primary-600" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{member.name}</h3>
-                                <p className="text-primary-600 font-medium mb-3">{member.role}</p>
-                                <p className="text-gray-600 text-sm leading-relaxed">{member.description}</p>
-                            </Card>
-                        ))}
-                    </div>
-                </section>
+                {/*<section className="mb-16">*/}
+                {/*    <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Our Team</h2>*/}
+                {/*    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">*/}
+                {/*        {team.map((member, index) => (*/}
+                {/*            <Card key={index} className="p-6 text-center">*/}
+                {/*                <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">*/}
+                {/*                    <Users className="h-10 w-10 text-primary-600" />*/}
+                {/*                </div>*/}
+                {/*                <h3 className="text-lg font-bold text-gray-900 mb-2">{member.name}</h3>*/}
+                {/*                <p className="text-primary-600 font-medium mb-3">{member.role}</p>*/}
+                {/*                <p className="text-gray-600 text-sm leading-relaxed">{member.description}</p>*/}
+                {/*            </Card>*/}
+                {/*        ))}*/}
+                {/*    </div>*/}
+                {/*</section>*/}
 
                 {/* Impact Stories */}
                 <section>
