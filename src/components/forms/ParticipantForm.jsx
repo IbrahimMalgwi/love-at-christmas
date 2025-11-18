@@ -16,8 +16,7 @@ const ParticipantForm = ({ onSuccess }) => {
         address: '',
         sex: '',
         age: '',
-        religion: '',
-        family_size: 1
+        religion: ''
     })
 
     const handleChange = (e) => {
@@ -46,8 +45,7 @@ const ParticipantForm = ({ onSuccess }) => {
             const participantData = {
                 ...formData,
                 user_id: user?.id, // Link to auth user if they want to login later
-                age: parseInt(formData.age),
-                family_size: parseInt(formData.family_size)
+                age: parseInt(formData.age)
             }
 
             const data = await createParticipant(participantData)
@@ -59,8 +57,7 @@ const ParticipantForm = ({ onSuccess }) => {
                 address: '',
                 sex: '',
                 age: '',
-                religion: '',
-                family_size: 1
+                religion: ''
             })
 
             if (onSuccess) {
@@ -180,7 +177,7 @@ const ParticipantForm = ({ onSuccess }) => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Age */}
                         <div>
                             <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
@@ -197,24 +194,6 @@ const ParticipantForm = ({ onSuccess }) => {
                                 onChange={handleChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="Age"
-                            />
-                        </div>
-
-                        {/* Family Size */}
-                        <div>
-                            <label htmlFor="family_size" className="block text-sm font-medium text-gray-700 mb-2">
-                                Family Size
-                            </label>
-                            <input
-                                type="number"
-                                id="family_size"
-                                name="family_size"
-                                min="1"
-                                max="20"
-                                value={formData.family_size}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Number of family members"
                             />
                         </div>
 
