@@ -35,12 +35,13 @@ const ParticipantForm = ({ onSuccess }) => {
         e.preventDefault()
         console.log('🚀 Form submitted - setting loading to true')
 
-        if (loading) {
-            console.log('⚠️ Already loading, ignoring submit')
-            return
-        }
-
+        // Force state update
         setLoading(true)
+
+        // Verify loading state was set
+        setTimeout(() => {
+            console.log('⏰ After setLoading(true) - current loading:', loading)
+        }, 0)
 
         try {
             const participantData = {
@@ -93,6 +94,11 @@ const ParticipantForm = ({ onSuccess }) => {
         } finally {
             console.log('🏁 Finally block - setting loading to false')
             setLoading(false)
+
+            // Verify loading state was reset
+            setTimeout(() => {
+                console.log('⏰ After setLoading(false) - current loading:', loading)
+            }, 0)
         }
     }
 
@@ -233,7 +239,7 @@ const ParticipantForm = ({ onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Submit Button with debug info */}
                     <div>
                         <Button
                             type="submit"
@@ -241,14 +247,10 @@ const ParticipantForm = ({ onSuccess }) => {
                             className="w-full"
                             size="lg"
                         >
-                            Register Participant
+                            {loading ? 'Registering...' : 'Register Participant'}
                         </Button>
                         <div className="text-xs text-gray-500 mt-1 text-center">
-                            Debug: loading = {loading.toString()}, form empty = {
-                            !formData.full_name &&
-                            !formData.phone_number &&
-                            !formData.address ? 'true' : 'false'
-                        }
+                            Debug: loading = {loading.toString()}
                         </div>
                     </div>
 
