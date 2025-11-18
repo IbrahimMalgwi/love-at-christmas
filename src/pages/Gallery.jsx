@@ -85,20 +85,24 @@ const Gallery = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                        Photo Gallery
-                    </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                        Relive the magical moments from previous Love At Christmas events and see the impact we've made together.
-                    </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Gradient */}
+            <section className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                            Gallery
+                        </h1>
+                        <p className="text-lg max-w-2xl mx-auto">
+                            See the joy and impact we've created together through our Love At Christmas events.
+                        </p>
+                    </div>
                 </div>
+            </section>
 
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Filters and Search */}
-                <Card className="p-6 mb-8">
+                <Card className="p-6 border border-gray-200 mb-6">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         {/* Year Filter */}
                         <div className="flex items-center space-x-4">
@@ -108,7 +112,7 @@ const Gallery = () => {
                                     <button
                                         key={year}
                                         onClick={() => setSelectedYear(year)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                                             selectedYear === year
                                                 ? 'bg-primary-600 text-white'
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -144,40 +148,40 @@ const Gallery = () => {
 
                 {/* Gallery Grid */}
                 {filteredImages.length === 0 ? (
-                    <Card className="text-center p-12">
-                        <div className="text-gray-400 mb-4">
-                            <Search className="h-16 w-16 mx-auto" />
+                    <Card className="text-center p-8 border border-gray-200">
+                        <div className="text-gray-400 mb-3">
+                            <Search className="h-12 w-12 mx-auto" />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos found</h3>
-                        <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No photos found</h3>
+                        <p className="text-gray-600 text-sm">Try adjusting your search or filter criteria</p>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {filteredImages.map(image => (
                             <Card
                                 key={image.id}
-                                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                                className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer group border border-gray-200"
                                 onClick={() => openImageModal(image)}
                             >
                                 {/* Image Placeholder */}
                                 <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 relative overflow-hidden">
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="text-center text-primary-600">
-                                            <Calendar className="h-12 w-12 mx-auto mb-2" />
-                                            <span className="font-semibold">Event Photo</span>
+                                            <Calendar className="h-10 w-10 mx-auto mb-2" />
+                                            <span className="font-semibold text-sm">Event Photo</span>
                                         </div>
                                     </div>
                                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
-                                        <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </div>
 
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-semibold text-gray-900">{image.title}</h3>
-                                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {image.year}
-                    </span>
+                                        <h3 className="font-semibold text-gray-900 text-sm">{image.title}</h3>
+                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            {image.year}
+                                        </span>
                                     </div>
                                     <p className="text-sm text-gray-600 mb-3">{image.description}</p>
                                     <div className="flex flex-wrap gap-1">
@@ -186,8 +190,8 @@ const Gallery = () => {
                                                 key={tag}
                                                 className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded"
                                             >
-                        #{tag}
-                      </span>
+                                                #{tag}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
@@ -202,20 +206,20 @@ const Gallery = () => {
                         <div className="p-6">
                             <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center">
                                 <div className="text-center text-primary-600">
-                                    <Calendar className="h-16 w-16 mx-auto mb-2" />
+                                    <Calendar className="h-12 w-12 mx-auto mb-2" />
                                     <span className="font-semibold">Event Photo Preview</span>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-gray-900">{selectedImage.title}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900">{selectedImage.title}</h3>
                                     <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    {selectedImage.year}
-                  </span>
+                                        {selectedImage.year}
+                                    </span>
                                 </div>
 
-                                <p className="text-gray-600">{selectedImage.description}</p>
+                                <p className="text-gray-600 text-sm">{selectedImage.description}</p>
 
                                 <div className="flex flex-wrap gap-2">
                                     {selectedImage.tags.map(tag => (
@@ -223,8 +227,8 @@ const Gallery = () => {
                                             key={tag}
                                             className="text-sm bg-primary-100 text-primary-700 px-3 py-1 rounded-full"
                                         >
-                      #{tag}
-                    </span>
+                                            #{tag}
+                                        </span>
                                     ))}
                                 </div>
                             </div>
@@ -233,13 +237,13 @@ const Gallery = () => {
                 </Modal>
 
                 {/* Call to Action */}
-                <Card className="bg-primary-600 text-white text-center p-8">
-                    <h2 className="text-2xl font-bold mb-4">Be Part of Our Next Event</h2>
-                    <p className="text-primary-100 mb-6 max-w-2xl mx-auto">
+                <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white text-center p-6">
+                    <h2 className="text-xl font-bold mb-3">Be Part of Our Next Event</h2>
+                    <p className="text-primary-100 mb-4 max-w-xl mx-auto text-sm">
                         Join us in creating more beautiful memories this Christmas. Your participation
                         helps us capture more moments of joy and connection.
                     </p>
-                    <Button variant="secondary">
+                    <Button variant="secondary" size="sm">
                         <a href="/register">Get Involved Today</a>
                     </Button>
                 </Card>

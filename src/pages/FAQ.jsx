@@ -121,26 +121,30 @@ const FAQ = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                        Frequently Asked Questions
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Find answers to common questions about Love At Christmas
-                    </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Gradient */}
+            <section className="bg-gradient-to-br from-cyan-600 to-sky-700 text-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                            Frequently Asked Questions
+                        </h1>
+                        <p className="text-lg max-w-2xl mx-auto">
+                            Find answers to common questions about Love At Christmas.
+                        </p>
+                    </div>
                 </div>
+            </section>
 
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* FAQ Categories */}
                 <div className="space-y-6">
                     {faqCategories.map(category => {
                         const Icon = category.icon
                         return (
-                            <Card key={category.id} className="overflow-hidden border border-gray-200 shadow-sm">
+                            <Card key={category.id} className="overflow-hidden border border-gray-200">
                                 {/* Category Header */}
-                                <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4">
+                                <div className="bg-gradient-to-r from-cyan-600 to-sky-600 text-white p-4">
                                     <div className="flex items-center space-x-3">
                                         <Icon className="h-5 w-5" />
                                         <h2 className="text-lg font-bold">{category.name}</h2>
@@ -157,18 +161,18 @@ const FAQ = () => {
                                                     onClick={() => toggleItem(faq.id)}
                                                     className="flex justify-between items-center w-full text-left group"
                                                 >
-                                                    <span className="text-base font-semibold text-gray-900 pr-4 group-hover:text-primary-600 transition-colors">
+                                                    <span className="text-base font-semibold text-gray-900 pr-4 group-hover:text-cyan-600 transition-colors">
                                                         {faq.question}
                                                     </span>
                                                     {isOpen ? (
-                                                        <ChevronUp className="h-4 w-4 text-primary-600 flex-shrink-0" />
+                                                        <ChevronUp className="h-4 w-4 text-cyan-600 flex-shrink-0" />
                                                     ) : (
-                                                        <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-primary-600 flex-shrink-0 transition-colors" />
+                                                        <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-cyan-600 flex-shrink-0 transition-colors" />
                                                     )}
                                                 </button>
 
                                                 {isOpen && (
-                                                    <div className="mt-3 text-gray-600 leading-relaxed pl-2 border-l-2 border-primary-200">
+                                                    <div className="mt-3 text-gray-600 leading-relaxed pl-2 border-l-2 border-cyan-200">
                                                         {faq.answer}
                                                     </div>
                                                 )}
@@ -182,25 +186,25 @@ const FAQ = () => {
                 </div>
 
                 {/* Still Have Questions */}
-                <Card className="mt-8 bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200 shadow-sm">
+                <Card className="mt-8 bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-200">
                     <div className="text-center p-6">
-                        <HelpCircle className="h-10 w-10 text-primary-600 mx-auto mb-3" />
+                        <HelpCircle className="h-10 w-10 text-cyan-600 mx-auto mb-3" />
                         <h2 className="text-xl font-bold text-gray-900 mb-3">
                             Still Have Questions?
                         </h2>
-                        <p className="text-gray-600 mb-4 max-w-xl mx-auto">
+                        <p className="text-gray-600 mb-4 max-w-xl mx-auto text-sm">
                             Can't find the answer you're looking for? Please reach out to our team, and we'll be happy to help you.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <button
                                 onClick={handleEmailClick}
-                                className="bg-primary-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm"
+                                className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-cyan-700 transition-colors shadow-sm"
                             >
                                 Email Us
                             </button>
                             <button
                                 onClick={handleCallClick}
-                                className="border border-primary-600 text-primary-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-600 hover:text-white transition-colors"
+                                className="border border-cyan-600 text-cyan-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-cyan-600 hover:text-white transition-colors"
                             >
                                 Call Us
                             </button>

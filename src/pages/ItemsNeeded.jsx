@@ -32,18 +32,22 @@ const ItemsNeeded = () => {
     if (error) return <div className="text-red-600 text-center p-8">Error loading items: {error}</div>
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                        Items Needed
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Your donations make a real difference. Browse the items we need to spread joy this Christmas.
-                    </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Gradient */}
+            <section className="bg-gradient-to-br from-orange-600 to-amber-700 text-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                            Items Needed
+                        </h1>
+                        <p className="text-lg max-w-2xl mx-auto">
+                            Your donations make a real difference. Browse the items we need to spread joy this Christmas.
+                        </p>
+                    </div>
                 </div>
+            </section>
 
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Category Filter */}
                 <div className="flex flex-wrap gap-3 justify-center mb-8">
                     {categories.map((category) => {

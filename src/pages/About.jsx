@@ -14,19 +14,23 @@ const About = () => {
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                        About Love At Christmas
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        For over 3 years, we've been bringing hope and joy to families in need during
-                        the Christmas season through community support, donations, and volunteer efforts.
-                    </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Gradient */}
+            <section className="bg-gradient-to-br from-blue-600 to-purple-700 text-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                            About Love At Christmas
+                        </h1>
+                        <p className="text-lg max-w-2xl mx-auto">
+                            For over 3 years, we've been bringing hope and joy to families in need during
+                            the Christmas season through community support, donations, and volunteer efforts.
+                        </p>
+                    </div>
                 </div>
+            </section>
 
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Mission, Vision, Values */}
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
                     <Card className="p-6 text-center border border-gray-200">
@@ -65,10 +69,10 @@ const About = () => {
                         <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-primary-200 h-full"></div>
 
                         {/* Timeline items */}
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                             {milestones.map((milestone, index) => (
                                 <div key={index} className={`flex items-center w-full ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
-                                    <div className="w-1/2 pr-6 pl-6">
+                                    <div className="w-1/2 pr-4 pl-4">
                                         <Card className="p-4 border border-gray-200">
                                             <div className="flex items-center mb-2">
                                                 <Clock className="h-4 w-4 text-primary-600 mr-2" />
@@ -78,7 +82,7 @@ const About = () => {
                                         </Card>
                                     </div>
                                     <div className="w-6 h-6 bg-primary-600 rounded-full border-4 border-white z-10"></div>
-                                    <div className="w-1/2 pl-6 pr-6"></div>
+                                    <div className="w-1/2 pl-4 pr-4"></div>
                                 </div>
                             ))}
                         </div>

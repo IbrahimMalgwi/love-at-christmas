@@ -1,4 +1,3 @@
-// src/pages/Events.jsx
 import React, { useState } from 'react'
 import { Calendar, MapPin, Clock, Users, Plus } from 'lucide-react'
 import EventCalendar from '../components/events/EventCalendar'
@@ -76,7 +75,7 @@ const Events = () => {
     const upcomingEvents = events.filter(event => {
         const eventDate = new Date(event.date)
         const today = new Date()
-        today.setHours(0, 0, 0, 0) // Reset time to start of day for accurate comparison
+        today.setHours(0, 0, 0, 0)
         return eventDate >= today
     })
 
@@ -100,19 +99,23 @@ const Events = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                        Events & Schedule
-                    </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                        Stay updated with all Love At Christmas events, volunteer opportunities, and important dates.
-                    </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Gradient */}
+            <section className="bg-gradient-to-br from-green-600 to-teal-700 text-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                            Events & Schedule
+                        </h1>
+                        <p className="text-lg max-w-2xl mx-auto">
+                            Stay updated with all Love At Christmas events, volunteer opportunities, and important dates.
+                        </p>
+                    </div>
                 </div>
+            </section>
 
-                <div className="grid lg:grid-cols-3 gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="grid lg:grid-cols-3 gap-6">
                     {/* Calendar Section */}
                     <div className="lg:col-span-2">
                         <EventCalendar
@@ -125,7 +128,7 @@ const Events = () => {
 
                     {/* Upcoming Events Sidebar */}
                     <div className="space-y-6">
-                        <Card>
+                        <Card className="border border-gray-200">
                             <CardHeader>
                                 <CardTitle>Upcoming Events</CardTitle>
                             </CardHeader>
@@ -138,7 +141,7 @@ const Events = () => {
                                             onClick={() => handleEventClick(event)}
                                         >
                                             <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                                                <h3 className="font-semibold text-gray-900 text-sm">{event.title}</h3>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.type)}`}>
                                                     {event.type}
                                                 </span>
