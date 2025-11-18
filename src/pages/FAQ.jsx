@@ -3,16 +3,10 @@ import { ChevronDown, ChevronUp, HelpCircle, Users, Gift, CreditCard, Calendar }
 import Card from '../components/common/Card'
 
 const FAQ = () => {
-    const [openItems, setOpenItems] = useState(new Set())
+    const [openItem, setOpenItem] = useState(null)
 
     const toggleItem = (id) => {
-        const newOpenItems = new Set(openItems)
-        if (newOpenItems.has(id)) {
-            newOpenItems.delete(id)
-        } else {
-            newOpenItems.add(id)
-        }
-        setOpenItems(newOpenItems)
+        setOpenItem(openItem === id ? null : id)
     }
 
     const faqCategories = [
@@ -118,55 +112,63 @@ const FAQ = () => {
         }
     ]
 
+    const handleEmailClick = () => {
+        window.location.href = 'mailto:foursquaregoseplchurchsabo@gmail.com'
+    }
+
+    const handleCallClick = () => {
+        window.location.href = 'tel:+2348104657320'
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
+        <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                         Frequently Asked Questions
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                         Find answers to common questions about Love At Christmas
                     </p>
                 </div>
 
                 {/* FAQ Categories */}
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {faqCategories.map(category => {
                         const Icon = category.icon
                         return (
-                            <Card key={category.id} className="overflow-hidden">
+                            <Card key={category.id} className="overflow-hidden border border-gray-200 shadow-sm">
                                 {/* Category Header */}
-                                <div className="bg-primary-600 text-white p-6">
+                                <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4">
                                     <div className="flex items-center space-x-3">
-                                        <Icon className="h-6 w-6" />
-                                        <h2 className="text-xl font-bold">{category.name}</h2>
+                                        <Icon className="h-5 w-5" />
+                                        <h2 className="text-lg font-bold">{category.name}</h2>
                                     </div>
                                 </div>
 
                                 {/* Questions */}
-                                <div className="divide-y divide-gray-200">
+                                <div className="divide-y divide-gray-100">
                                     {category.questions.map(faq => {
-                                        const isOpen = openItems.has(faq.id)
+                                        const isOpen = openItem === faq.id
                                         return (
-                                            <div key={faq.id} className="p-6">
+                                            <div key={faq.id} className="p-4 hover:bg-gray-50 transition-colors">
                                                 <button
                                                     onClick={() => toggleItem(faq.id)}
-                                                    className="flex justify-between items-center w-full text-left"
+                                                    className="flex justify-between items-center w-full text-left group"
                                                 >
-                          <span className="text-lg font-semibold text-gray-900 pr-4">
-                            {faq.question}
-                          </span>
+                                                    <span className="text-base font-semibold text-gray-900 pr-4 group-hover:text-primary-600 transition-colors">
+                                                        {faq.question}
+                                                    </span>
                                                     {isOpen ? (
-                                                        <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                                                        <ChevronUp className="h-4 w-4 text-primary-600 flex-shrink-0" />
                                                     ) : (
-                                                        <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                                                        <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-primary-600 flex-shrink-0 transition-colors" />
                                                     )}
                                                 </button>
 
                                                 {isOpen && (
-                                                    <div className="mt-4 text-gray-600 leading-relaxed">
+                                                    <div className="mt-3 text-gray-600 leading-relaxed pl-2 border-l-2 border-primary-200">
                                                         {faq.answer}
                                                     </div>
                                                 )}
@@ -180,29 +182,32 @@ const FAQ = () => {
                 </div>
 
                 {/* Still Have Questions */}
-                <Card className="mt-12 bg-primary-50 border-primary-200">
-                    <div className="text-center p-8">
-                        <HelpCircle className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <Card className="mt-8 bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200 shadow-sm">
+                    <div className="text-center p-6">
+                        <HelpCircle className="h-10 w-10 text-primary-600 mx-auto mb-3" />
+                        <h2 className="text-xl font-bold text-gray-900 mb-3">
                             Still Have Questions?
                         </h2>
-                        <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                            Can't find the answer you're looking for? Please reach out to our team,
-                            and we'll be happy to help you.
+                        <p className="text-gray-600 mb-4 max-w-xl mx-auto">
+                            Can't find the answer you're looking for? Please reach out to our team, and we'll be happy to help you.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a
-                                href="mailto:info@loveatchristmas.org"
-                                className="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button
+                                onClick={handleEmailClick}
+                                className="bg-primary-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm"
                             >
                                 Email Us
-                            </a>
-                            <a
-                                href="tel:+15551234567"
-                                className="border border-primary-600 text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-primary-600 hover:text-white transition-colors"
+                            </button>
+                            <button
+                                onClick={handleCallClick}
+                                className="border border-primary-600 text-primary-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-600 hover:text-white transition-colors"
                             >
                                 Call Us
-                            </a>
+                            </button>
+                        </div>
+                        <div className="mt-4 text-sm text-gray-500">
+                            <p>foursquaregoseplchurchsabo@gmail.com</p>
+                            <p>+234 810 465 7320</p>
                         </div>
                     </div>
                 </Card>
