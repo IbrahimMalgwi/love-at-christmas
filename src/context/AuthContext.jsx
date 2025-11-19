@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserProfile = useCallback(async (user) => {
         try {
-            console.log('Fetching profile for user:', user.id)
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -43,7 +42,6 @@ export const AuthProvider = ({ children }) => {
 
             if (error && error.code === 'PGRST116') {
                 // Profile doesn't exist, create one
-                console.log('Profile not found, creating...')
                 const { data: newProfile, error: createError } = await createUserProfile(user)
 
                 if (createError) {
@@ -102,8 +100,6 @@ export const AuthProvider = ({ children }) => {
             async (event, session) => {
                 if (!mounted) return
 
-                console.log('Auth state changed:', event, session?.user?.email)
-
                 setUser(session?.user ?? null)
 
                 if (session?.user) {
@@ -138,8 +134,6 @@ export const AuthProvider = ({ children }) => {
 
     const signUp = async (email, password, userData = {}) => {
         try {
-            console.log('Signing up user:', email)
-
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -158,7 +152,6 @@ export const AuthProvider = ({ children }) => {
             }
 
             if (data.user) {
-                console.log('User created, creating profile...')
                 // Create profile for the new user with explicit user_role
                 await createUserProfile(data.user, {
                     full_name: userData.full_name,
@@ -189,8 +182,6 @@ export const AuthProvider = ({ children }) => {
 
     const signIn = async (email, password) => {
         try {
-            console.log('Signing in:', email)
-
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password
@@ -205,7 +196,7 @@ export const AuthProvider = ({ children }) => {
             await new Promise(resolve => setTimeout(resolve, 1000))
             const currentProfile = await fetchUserProfile(data.user)
 
-            // Updated: Allow volunteers and admins to login, restrict participants
+            // Allow volunteers and admins to login, restrict participants
             if (currentProfile?.user_role === 'participant') {
                 await supabase.auth.signOut()
                 throw new Error('Participants should use the registration form. Volunteers and administrators can login to the system.')
@@ -231,13 +222,9 @@ export const AuthProvider = ({ children }) => {
 
     const signOut = async () => {
         try {
-            console.log('Starting sign out process...')
-
             // Clear local state first to ensure UI updates immediately
             setUser(null)
             setProfile(null)
-
-            console.log('Local state cleared, calling Supabase auth.signOut()...')
 
             // Add a timeout to prevent hanging
             const signOutPromise = supabase.auth.signOut()
@@ -251,12 +238,8 @@ export const AuthProvider = ({ children }) => {
             if (error) {
                 console.error('Supabase signout error:', error)
                 // Even if Supabase signout fails, we've cleared local state
-                // Don't throw - we want to complete the process
-            } else {
-                console.log('Supabase signout successful')
             }
 
-            // Show notification
             addNotification({
                 type: 'info',
                 title: 'Signed out',

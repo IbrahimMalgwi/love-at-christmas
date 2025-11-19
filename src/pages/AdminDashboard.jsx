@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-// import { useAuth } from '../hooks/useAuth'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { useSupabase } from '../hooks/useSupabase'
 import {
     Users,
@@ -8,64 +8,89 @@ import {
     DollarSign,
     Download,
     Calendar,
-    BarChart3
+    BarChart3,
+    Package,
+    Plus,
+    Edit,
+    Trash2,
+    TrendingUp,
+    TrendingDown
 } from 'lucide-react'
 import StatsCard from '../components/dashboard/StatsCard'
 import VolunteerChart from '../components/dashboard/VolunteerChart'
 import ParticipantTable from '../components/dashboard/ParticipantTable'
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/Card'
 import Button from '../components/common/Button'
+import LoadingSpinner from '../components/common/LoadingSpinner'
+import ItemManagement from '../components/dashboard/ItemManagement'
 
 const AdminDashboard = () => {
-    // const { user } = useAuth()
-    const { data: participants } = useSupabase('participants')
-    const { data: volunteers } = useSupabase('volunteers')
-    const { data: items } = useSupabase('items_needed')
-    const { data: donations } = useSupabase('donations')
+    const { user, profile, isAdmin } = useAuth()
+    const { data: participants, loading: participantsLoading } = useSupabase('participants')
+    const { data: volunteers, loading: volunteersLoading } = useSupabase('volunteers')
+    const { data: items, loading: itemsLoading, refetch: refetchItems } = useSupabase('items_needed')
+    const { data: donations, loading: donationsLoading } = useSupabase('donations')
 
     const [activeView, setActiveView] = useState('overview')
     const [exportLoading, setExportLoading] = useState(false)
+    const [stats, setStats] = useState([])
 
-    // Calculate stats
-    const totalParticipants = participants?.length || 0
-    const totalVolunteers = volunteers?.length || 0
-    const totalItems = items?.reduce((sum, item) => sum + (item.current_quantity || 0), 0) || 0
-    const totalDonations = donations?.reduce((sum, donation) => sum + (parseFloat(donation.amount) || 0), 0) || 0
+    // Calculate real-time statistics
+    useEffect(() => {
+        if (participants && volunteers && items && donations) {
+            const totalParticipants = participants.length
+            const totalVolunteers = volunteers.length
+            const totalItems = items.reduce((sum, item) => sum + (item.current_quantity || 0), 0)
+            const totalDonations = donations.reduce((sum, donation) => sum + (parseFloat(donation.amount) || 0), 0)
 
-    const stats = [
-        {
-            title: 'Total Participants',
-            value: totalParticipants.toLocaleString(),
-            change: '+12%',
-            changeType: 'positive',
-            icon: Users,
-            description: 'Registered for 2025 event'
-        },
-        {
-            title: 'Active Volunteers',
-            value: totalVolunteers.toLocaleString(),
-            change: '+8%',
-            changeType: 'positive',
-            icon: Heart,
-            description: 'Across all roles'
-        },
-        {
-            title: 'Items Collected',
-            value: totalItems.toLocaleString(),
-            change: '+15%',
-            changeType: 'positive',
-            icon: Gift,
-            description: 'Towards our goal'
-        },
-        {
-            title: 'Donations Received',
-            value: `$${totalDonations.toLocaleString()}`,
-            change: '+22%',
-            changeType: 'positive',
-            icon: DollarSign,
-            description: 'Financial support'
+            // Calculate progress for all items
+            const totalTarget = items.reduce((sum, item) => sum + (item.target_quantity || 0), 0)
+            const overallProgress = totalTarget > 0 ? Math.round((totalItems / totalTarget) * 100) : 0
+
+            // Calculate trends (you can replace with real data)
+            const participantTrend = totalParticipants > 50 ? 'positive' : 'neutral'
+            const volunteerTrend = totalVolunteers > 20 ? 'positive' : 'neutral'
+            const itemsTrend = overallProgress > 30 ? 'positive' : 'neutral'
+            const donationsTrend = totalDonations > 50000 ? 'positive' : 'neutral'
+
+            const newStats = [
+                {
+                    title: 'Total Participants',
+                    value: totalParticipants.toLocaleString(),
+                    change: participantTrend === 'positive' ? '+12%' : '+5%',
+                    changeType: participantTrend,
+                    icon: Users,
+                    description: 'Registered for 2025 event'
+                },
+                {
+                    title: 'Active Volunteers',
+                    value: totalVolunteers.toLocaleString(),
+                    change: volunteerTrend === 'positive' ? '+8%' : '+3%',
+                    changeType: volunteerTrend,
+                    icon: Heart,
+                    description: 'Across all roles'
+                },
+                {
+                    title: 'Items Collected',
+                    value: totalItems.toLocaleString(),
+                    change: itemsTrend === 'positive' ? '+15%' : '+8%',
+                    changeType: itemsTrend,
+                    icon: Gift,
+                    description: `${overallProgress}% of target`
+                },
+                {
+                    title: 'Donations Received',
+                    value: `₦${totalDonations.toLocaleString()}`,
+                    change: donationsTrend === 'positive' ? '+22%' : '+10%',
+                    changeType: donationsTrend,
+                    icon: DollarSign,
+                    description: 'Financial support'
+                }
+            ]
+
+            setStats(newStats)
         }
-    ]
+    }, [participants, volunteers, items, donations])
 
     const handleExport = async (type) => {
         setExportLoading(true)
@@ -74,8 +99,36 @@ const AdminDashboard = () => {
             await new Promise(resolve => setTimeout(resolve, 2000))
 
             // In a real app, you would generate and download CSV/Excel files
-            console.log(`Exporting ${type} data...`)
-            alert(`${type} data exported successfully!`)
+            let data = []
+            switch (type) {
+                case 'participants':
+                    data = participants
+                    break
+                case 'volunteers':
+                    data = volunteers
+                    break
+                case 'donations':
+                    data = donations
+                    break
+                case 'items':
+                    data = items
+                    break
+                default:
+                    data = []
+            }
+
+            // Create CSV content (simplified)
+            const csvContent = "data:text/csv;charset=utf-8,"
+                + data.map(row => Object.values(row).join(',')).join('\n')
+
+            const encodedUri = encodeURI(csvContent)
+            const link = document.createElement("a")
+            link.setAttribute("href", encodedUri)
+            link.setAttribute("download", `${type}_export_${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+
         } catch (error) {
             console.error('Export failed:', error)
             alert('Export failed. Please try again.')
@@ -84,10 +137,9 @@ const AdminDashboard = () => {
         }
     }
 
-    // Check if user is admin (you'll need to implement proper admin check)
-    const isAdmin = true // Replace with actual admin check
+    const loading = participantsLoading || volunteersLoading || itemsLoading || donationsLoading
 
-    if (!isAdmin) {
+    if (!isAdmin()) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <Card className="max-w-md text-center">
@@ -105,6 +157,10 @@ const AdminDashboard = () => {
         )
     }
 
+    if (loading) {
+        return <LoadingSpinner size="lg" className="min-h-screen flex items-center justify-center" />
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -113,12 +169,19 @@ const AdminDashboard = () => {
                     <div className="flex justify-between items-center py-6">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                            <p className="text-gray-600">Love At Christmas 2025 Analytics</p>
+                            <p className="text-gray-600">
+                                Welcome back, {profile?.full_name || user?.email} • Love At Christmas 2025 Analytics
+                            </p>
                         </div>
                         <div className="flex space-x-3">
-                            <Button variant="outline" size="sm" loading={exportLoading}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                loading={exportLoading}
+                                onClick={() => handleExport('all')}
+                            >
                                 <Download className="h-4 w-4 mr-2" />
-                                Export Report
+                                Export All Data
                             </Button>
                             <Button size="sm">
                                 <Calendar className="h-4 w-4 mr-2" />
@@ -134,6 +197,7 @@ const AdminDashboard = () => {
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
                     {[
                         { id: 'overview', name: 'Overview', icon: BarChart3 },
+                        { id: 'items', name: 'Items Management', icon: Package },
                         { id: 'participants', name: 'Participants', icon: Users },
                         { id: 'volunteers', name: 'Volunteers', icon: Heart },
                         { id: 'donations', name: 'Donations', icon: DollarSign }
@@ -166,47 +230,133 @@ const AdminDashboard = () => {
                             ))}
                         </div>
 
-                        {/* Charts Grid */}
+                        {/* Quick Insights */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <VolunteerChart data={volunteers} />
-
-                            {/* Additional Chart Placeholder */}
+                            {/* Items Progress */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Registration Trends</CardTitle>
+                                    <CardTitle>Items Collection Progress</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="h-64 flex items-center justify-center text-gray-400">
-                                        <BarChart3 className="h-12 w-12" />
-                                        <span className="ml-2">Registration trends chart</span>
+                                    <div className="space-y-4">
+                                        {items && items.slice(0, 5).map((item) => {
+                                            const progress = item.target_quantity > 0
+                                                ? Math.round((item.current_quantity / item.target_quantity) * 100)
+                                                : 0
+                                            return (
+                                                <div key={item.id} className="flex items-center justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between text-sm mb-1">
+                                                            <span className="font-medium text-gray-900">{item.name}</span>
+                                                            <span className="text-gray-600">{progress}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                                            <div
+                                                                className={`h-2 rounded-full ${
+                                                                    progress > 70 ? 'bg-green-500' :
+                                                                        progress > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                }`}
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 mt-1">
+                                                            {item.current_quantity} / {item.target_quantity} {item.unit}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Recent Activity */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Recent Activity</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <TrendingUp className="h-4 w-4 text-green-600 mr-2" />
+                                                <span className="text-sm font-medium text-green-800">
+                                                    5 new participants registered
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-green-600">2 hours ago</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <DollarSign className="h-4 w-4 text-blue-600 mr-2" />
+                                                <span className="text-sm font-medium text-blue-800">
+                                                    ₦25,000 donation received
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-blue-600">5 hours ago</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <Gift className="h-4 w-4 text-yellow-600 mr-2" />
+                                                <span className="text-sm font-medium text-yellow-800">
+                                                    50 bags of rice donated
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-yellow-600">1 day ago</span>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
 
-                        {/* Quick Actions */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Quick Actions</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <Button variant="outline" onClick={() => handleExport('participants')}>
-                                        Export Participants
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExport('volunteers')}>
-                                        Export Volunteers
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExport('donations')}>
-                                        Export Donations
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExport('items')}>
-                                        Export Items
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {/* Charts Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <VolunteerChart data={volunteers} />
+
+                            {/* Items by Category */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Items by Category</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {items && Array.from(new Set(items.map(item => item.category))).map(category => {
+                                            const categoryItems = items.filter(item => item.category === category)
+                                            const totalCollected = categoryItems.reduce((sum, item) => sum + item.current_quantity, 0)
+                                            const totalTarget = categoryItems.reduce((sum, item) => sum + item.target_quantity, 0)
+                                            const progress = totalTarget > 0 ? Math.round((totalCollected / totalTarget) * 100) : 0
+
+                                            return (
+                                                <div key={category} className="flex items-center justify-between">
+                                                    <span className="text-sm font-medium text-gray-900">{category}</span>
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                                                            <div
+                                                                className={`h-2 rounded-full ${
+                                                                    progress > 70 ? 'bg-green-500' :
+                                                                        progress > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                }`}
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-xs text-gray-600 w-8">{progress}%</span>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
+                )}
+
+                {/* Items Management View */}
+                {activeView === 'items' && (
+                    <ItemManagement
+                        items={items}
+                        onItemsUpdate={refetchItems}
+                    />
                 )}
 
                 {/* Participants View */}

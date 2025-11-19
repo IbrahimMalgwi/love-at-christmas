@@ -9,12 +9,13 @@ const ItemsNeeded = () => {
     const [selectedCategory, setSelectedCategory] = useState('All')
 
     const categories = [
-        { id: 'All', name: 'All Items', color: 'bg-gray-500' },
-        { id: 'Clothing', name: 'Clothing', color: 'bg-blue-500' },
-        { id: 'Household Items', name: 'Household Items', color: 'bg-green-500' },
-        { id: 'Food Items', name: 'Food Items', color: 'bg-yellow-500' },
-        { id: 'Shoes', name: 'Shoes', color: 'bg-purple-500' },
-        { id: 'Financial Support', name: 'Financial', color: 'bg-red-500' },
+        { id: 'All', name: 'All Items', color: 'bg-gray-500', icon: '📦' },
+        { id: 'Food Items', name: 'Food Items', color: 'bg-yellow-500', icon: '🍚' },
+        { id: 'Clothing', name: 'Clothing', color: 'bg-blue-500', icon: '👕' },
+        { id: 'Electronics', name: 'Electronics', color: 'bg-purple-500', icon: '📺' },
+        { id: 'Utensils', name: 'Utensils', color: 'bg-orange-500', icon: '🍴' },
+        { id: 'Shoes', name: 'Shoes', color: 'bg-green-500', icon: '👟' },
+        { id: 'Financial Support', name: 'Financial', color: 'bg-red-500', icon: '💰' },
     ]
 
     const filteredItems = selectedCategory === 'All'
@@ -26,6 +27,13 @@ const ItemsNeeded = () => {
         const totalTarget = categoryItems.reduce((sum, item) => sum + (item.target_quantity || 0), 0)
         const totalCurrent = categoryItems.reduce((sum, item) => sum + (item.current_quantity || 0), 0)
         return { totalTarget, totalCurrent }
+    }
+
+    const formatNumber = (num) => {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k'
+        }
+        return num.toString()
     }
 
     if (loading) return <LoadingSpinner size="lg" className="min-h-screen flex items-center justify-center" />
@@ -57,15 +65,16 @@ const ItemsNeeded = () => {
                             <button
                                 key={category.id}
                                 onClick={() => setSelectedCategory(category.id)}
-                                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
+                                className={`flex items-center px-4 py-3 rounded-lg font-medium transition-all ${
                                     selectedCategory === category.id
-                                        ? 'bg-primary-600 text-white shadow-sm'
-                                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                                        ? 'bg-primary-600 text-white shadow-lg transform scale-105'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-primary-300'
                                 }`}
                             >
-                                {category.name}
+                                <span className="text-lg mr-2">{category.icon}</span>
+                                <span>{category.name}</span>
                                 {category.id !== 'All' && stats.totalTarget > 0 && (
-                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
                                         selectedCategory === category.id
                                             ? 'bg-white text-primary-600'
                                             : 'bg-gray-100 text-gray-600'
@@ -78,6 +87,43 @@ const ItemsNeeded = () => {
                     })}
                 </div>
 
+                {/* Category Progress Summary */}
+                {selectedCategory === 'All' && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                        {categories.filter(cat => cat.id !== 'All').map((category) => {
+                            const stats = getCategoryStats(category.id)
+                            const progress = calculateProgress(stats.totalCurrent, stats.totalTarget)
+
+                            return (
+                                <div key={category.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                    <div className="flex items-center mb-2">
+                                        <span className="text-2xl mr-2">{category.icon}</span>
+                                        <span className="font-semibold text-sm text-gray-800">{category.name}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-gray-600">Progress</span>
+                                            <span className="font-semibold">{Math.round(progress)}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className={`h-2 rounded-full transition-all duration-500 ${
+                                                    progress > 70 ? 'bg-green-500' :
+                                                        progress > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                }`}
+                                                style={{ width: `${progress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-500 text-center">
+                                            {formatNumber(stats.totalCurrent)} / {formatNumber(stats.totalTarget)}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+
                 {/* Items Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {filteredItems.map((item) => {
@@ -85,10 +131,13 @@ const ItemsNeeded = () => {
                         const category = categories.find(cat => cat.id === item.category)
 
                         return (
-                            <Card key={item.id} className="hover:shadow-md transition-shadow border border-gray-200">
+                            <Card key={item.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-primary-300">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base font-semibold">{item.name}</CardTitle>
+                                        <div className="flex items-center">
+                                            <span className="text-xl mr-2">{category?.icon}</span>
+                                            <CardTitle className="text-base font-semibold">{item.name}</CardTitle>
+                                        </div>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                             item.priority === 'High' ? 'bg-red-100 text-red-800' :
                                                 item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -103,6 +152,8 @@ const ItemsNeeded = () => {
                                     <div className="flex items-center text-sm text-gray-600">
                                         <span className={`w-3 h-3 rounded-full mr-2 ${category?.color}`}></span>
                                         <span>{item.category}</span>
+                                        <span className="mx-2">•</span>
+                                        <span>Unit: {item.unit}</span>
                                     </div>
 
                                     {item.target_quantity && (
@@ -111,12 +162,15 @@ const ItemsNeeded = () => {
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-gray-600">Progress</span>
                                                     <span className="font-medium">
-                                                        {item.current_quantity} / {item.target_quantity}
+                                                        {item.current_quantity} / {item.target_quantity} {item.unit}
                                                     </span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                                     <div
-                                                        className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                                            progress > 70 ? 'bg-green-500' :
+                                                                progress > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                        }`}
                                                         style={{ width: `${progress}%` }}
                                                     ></div>
                                                 </div>
@@ -135,8 +189,8 @@ const ItemsNeeded = () => {
 
                                     {item.category === 'Financial Support' && (
                                         <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
-                                            <p className="text-sm text-primary-700 text-center">
-                                                Monetary donations help us purchase exactly what's needed
+                                            <p className="text-sm text-primary-700 text-center font-medium">
+                                                💰 Monetary donations help us purchase exactly what's needed
                                             </p>
                                         </div>
                                     )}
@@ -181,6 +235,16 @@ const ItemsNeeded = () => {
                                 <p className="text-gray-600 text-sm">
                                     Bring items to our collection center or schedule a pickup
                                 </p>
+                            </div>
+                        </div>
+
+                        {/* Contact Information */}
+                        <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                            <h4 className="font-semibold text-gray-900 mb-2 text-center">Contact for Donations</h4>
+                            <div className="text-center text-sm text-gray-600">
+                                <p>📧 Email: foursquaregoseplchurchsabo@gmail.com</p>
+                                <p>📞 Phone: +234 810 465 7320</p>
+                                <p>📍 Location: Foursquare Gospel Church, Sabo</p>
                             </div>
                         </div>
                     </CardContent>
