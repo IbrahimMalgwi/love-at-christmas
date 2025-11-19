@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '../services/supabaseClient'
 import { useNotifications } from '../hooks/useNotifications'
@@ -187,17 +188,17 @@ export const AuthProvider = ({ children }) => {
                 password
             })
 
-            if (error) {
-                console.error('Signin error:', error)
-                throw error
-            }
+            if (error) throw error
 
-            // Wait for profile to be fetched
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Wait for profile to load properly
             const currentProfile = await fetchUserProfile(data.user)
 
-            // Allow volunteers and admins to login, restrict participants
-            if (currentProfile?.user_role === 'participant') {
+            if (!currentProfile) {
+                throw new Error('Unable to load user profile')
+            }
+
+            // Allow only volunteers and admins to login
+            if (currentProfile.user_role === 'participant') {
                 await supabase.auth.signOut()
                 throw new Error('Participants should use the registration form. Volunteers and administrators can login to the system.')
             }
@@ -205,7 +206,7 @@ export const AuthProvider = ({ children }) => {
             addNotification({
                 type: 'success',
                 title: 'Welcome back!',
-                message: `Signed in as ${currentProfile?.full_name || email}`
+                message: `Signed in as ${currentProfile.full_name || email}`
             })
 
             return { data, error: null }
@@ -226,18 +227,10 @@ export const AuthProvider = ({ children }) => {
             setUser(null)
             setProfile(null)
 
-            // Add a timeout to prevent hanging
-            const signOutPromise = supabase.auth.signOut()
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Sign out timeout')), 5000)
-            )
-
-            // Race between sign out and timeout
-            const { error } = await Promise.race([signOutPromise, timeoutPromise])
+            const { error } = await supabase.auth.signOut()
 
             if (error) {
                 console.error('Supabase signout error:', error)
-                // Even if Supabase signout fails, we've cleared local state
             }
 
             addNotification({
@@ -246,22 +239,10 @@ export const AuthProvider = ({ children }) => {
                 message: 'You have been signed out successfully.'
             })
 
-            // Force navigation to home page to ensure clean state
-            window.location.href = '/'
-
             return { error: null }
         } catch (error) {
             console.error('Signout process error:', error)
-
-            // Still show success message and redirect
-            addNotification({
-                type: 'info',
-                title: 'Signed out',
-                message: 'You have been signed out successfully.'
-            })
-
-            window.location.href = '/'
-            return { error: null }
+            return { error }
         }
     }
 
@@ -309,22 +290,6 @@ export const AuthProvider = ({ children }) => {
     const canManageParticipants = () => isAdmin() || isVolunteer()
     const canManageContent = () => isAdmin() || isVolunteer()
 
-    const promoteToVolunteer = async (userId) => {
-        if (!isAdmin()) {
-            throw new Error('Only admins can promote users to volunteer')
-        }
-
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({ user_role: 'volunteer' })
-            .eq('id', userId)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
     const value = {
         user,
         profile,
@@ -339,8 +304,7 @@ export const AuthProvider = ({ children }) => {
         isVolunteer,
         isParticipant,
         canManageParticipants,
-        canManageContent,
-        promoteToVolunteer
+        canManageContent
     }
 
     return (

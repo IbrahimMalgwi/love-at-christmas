@@ -1,3 +1,4 @@
+// src/components/forms/ParticipantForm.jsx
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useParticipants } from '../../hooks/useData'

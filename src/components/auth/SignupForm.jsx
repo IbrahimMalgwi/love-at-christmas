@@ -1,3 +1,4 @@
+// src/components/auth/SignupForm.jsx
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import Button from '../common/Button'
@@ -14,7 +15,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         phone: '',
         password: '',
         confirmPassword: '',
-        user_role: 'participant'
+        user_role: 'volunteer' // Default to volunteer for your use case
     })
     const [error, setError] = useState('')
 
@@ -37,17 +38,16 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         }
 
         try {
-            const { data, error } = await signUp({
-                email: formData.email,
-                password: formData.password,
-                options: {
-                    data: {
-                        full_name: formData.full_name,
-                        phone: formData.phone,
-                        user_role: formData.user_role
-                    }
+            // FIXED: Call signUp with correct parameters
+            const { data, error } = await signUp(
+                formData.email,
+                formData.password,
+                {
+                    full_name: formData.full_name,
+                    phone: formData.phone,
+                    user_role: formData.user_role
                 }
-            })
+            )
 
             if (error) throw error
 
@@ -75,7 +75,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-2">
-                            Full Name
+                            Full Name *
                         </label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -94,7 +94,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                                Email
+                                Email *
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -112,7 +112,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
 
                         <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                                Phone
+                                Phone *
                             </label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -131,7 +131,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
 
                     <div>
                         <label htmlFor="user_role" className="block text-sm font-medium text-gray-700 mb-2">
-                            I want to:
+                            I want to: *
                         </label>
                         <select
                             id="user_role"
@@ -140,15 +140,20 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                             onChange={(e) => setFormData({ ...formData, user_role: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         >
-                            <option value="participant">Receive Support</option>
                             <option value="volunteer">Volunteer</option>
-                            <option value="supporter">Support & Donate</option>
+                            <option value="participant">Receive Support</option>
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {formData.user_role === 'volunteer'
+                                ? 'Volunteers can register participants and access volunteer features'
+                                : 'Participants can receive support and register for events'
+                            }
+                        </p>
                     </div>
 
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                            Password
+                            Password *
                         </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -159,7 +164,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Create password"
+                                placeholder="Create password (min. 6 characters)"
                             />
                             <button
                                 type="button"
@@ -173,7 +178,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
 
                     <div>
                         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                            Confirm Password
+                            Confirm Password *
                         </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

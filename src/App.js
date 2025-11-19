@@ -1,3 +1,4 @@
+// src/App.js
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
@@ -20,13 +21,17 @@ import Events from './pages/Events'
 import Profile from './pages/Profile'
 import Auth from './pages/Auth'
 
+// Protected Route Component
+import ProtectedRoute from './components/common/ProtectedRoute'
+
 function App() {
     return (
-        <NotificationProvider> {/* Move to top */}
+        <NotificationProvider>
             <AuthProvider>
                 <Router>
                     <Layout>
                         <Routes>
+                            {/* Public routes */}
                             <Route path="/" element={<Home />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/events" element={<Events />} />
@@ -36,8 +41,26 @@ function App() {
                             <Route path="/donate" element={<Donate />} />
                             <Route path="/faq" element={<FAQ />} />
                             <Route path="/auth" element={<Auth />} />
-                            <Route path="/profile" element={<Profile />} />
-                            <Route path="/admin" element={<AdminDashboard />} />
+
+                            {/* Protected routes */}
+                            <Route
+                                path="/profile"
+                                element={
+                                    <ProtectedRoute>
+                                        <Profile />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            {/* Volunteer-only routes */}
+                            <Route
+                                path="/admin"
+                                element={
+                                    <ProtectedRoute requiredRole={['volunteer', 'admin']}>
+                                        <AdminDashboard />
+                                    </ProtectedRoute>
+                                }
+                            />
                         </Routes>
 
                         {/* Global Components */}
