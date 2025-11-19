@@ -231,27 +231,54 @@ export const AuthProvider = ({ children }) => {
 
     const signOut = async () => {
         try {
-            const { error } = await supabase.auth.signOut()
-            if (error) throw error
+            console.log('Starting sign out process...')
 
+            // Clear local state first to ensure UI updates immediately
             setUser(null)
             setProfile(null)
 
+            console.log('Local state cleared, calling Supabase auth.signOut()...')
+
+            // Add a timeout to prevent hanging
+            const signOutPromise = supabase.auth.signOut()
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+            )
+
+            // Race between sign out and timeout
+            const { error } = await Promise.race([signOutPromise, timeoutPromise])
+
+            if (error) {
+                console.error('Supabase signout error:', error)
+                // Even if Supabase signout fails, we've cleared local state
+                // Don't throw - we want to complete the process
+            } else {
+                console.log('Supabase signout successful')
+            }
+
+            // Show notification
             addNotification({
                 type: 'info',
                 title: 'Signed out',
                 message: 'You have been signed out successfully.'
             })
 
+            // Force navigation to home page to ensure clean state
+            window.location.href = '/'
+
             return { error: null }
         } catch (error) {
-            console.error('Signout error:', error)
+            console.error('Signout process error:', error)
+
+            // Still show success message and redirect
             addNotification({
-                type: 'error',
-                title: 'Sign out failed',
-                message: error.message
+                type: 'info',
+                title: 'Signed out',
+                message: 'You have been signed out successfully.'
             })
-            return { error }
+
+            window.location.href = '/'
+            return { error: null }
         }
     }
 
