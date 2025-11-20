@@ -1,6 +1,6 @@
 // src/pages/Auth.jsx
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import LoginForm from '../components/auth/LoginForm'
 import SignupForm from '../components/auth/SignupForm'
@@ -9,6 +9,15 @@ import { useAuth } from '../context/AuthContext'
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true)
     const { user } = useAuth()
+    const navigate = useNavigate()
+
+    const handleSuccess = () => {
+        // Use React Router navigate instead of window.location
+        // This gives time for the auth state to update properly
+        setTimeout(() => {
+            navigate('/', { replace: true })
+        }, 100)
+    }
 
     if (user) {
         return (
@@ -33,22 +42,22 @@ const Auth = () => {
                         <span className="font-bold text-2xl text-gray-900">Love At Christmas</span>
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {isLogin ? 'Welcome Back' : 'Join Our Community'}
+                        {isLogin ? 'Welcome Back' : 'Become a Volunteer'}
                     </h1>
                     <p className="text-gray-600 mt-2">
-                        {isLogin ? 'Sign in to your account' : 'Create your account to get started'}
+                        {isLogin ? 'Sign in to your volunteer account' : 'Create your volunteer account to get started'}
                     </p>
                 </div>
 
                 {/* Auth Form */}
                 {isLogin ? (
                     <LoginForm
-                        onSuccess={() => window.location.href = '/'}
+                        onSuccess={handleSuccess}
                         onSwitchToSignup={() => setIsLogin(false)}
                     />
                 ) : (
                     <SignupForm
-                        onSuccess={() => window.location.href = '/'}
+                        onSuccess={handleSuccess}
                         onSwitchToLogin={() => setIsLogin(true)}
                     />
                 )}

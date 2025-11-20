@@ -1,3 +1,4 @@
+// src/components/auth/LoginForm.jsx
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import Button from '../common/Button'
@@ -20,11 +21,11 @@ const LoginForm = ({ onSuccess, onSwitchToSignup }) => {
         setError('')
 
         try {
-            // FIXED: Pass email and password as separate parameters, not as an object
             const { data, error } = await signIn(formData.email, formData.password)
 
             if (error) throw error
 
+            // Call onSuccess after successful login
             if (onSuccess) {
                 onSuccess(data)
             }

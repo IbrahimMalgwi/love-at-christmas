@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import { supabase } from '../services/supabaseClient'
 import { useNotifications } from '../hooks/useNotifications'
 
@@ -7,179 +7,110 @@ export const AuthContext = createContext({})
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
-    const [profile, setProfile] = useState(null)
     const [loading, setLoading] = useState(true)
     const { addNotification } = useNotifications()
 
-    const createUserProfile = useCallback(async (user, userData = {}) => {
-        const profileData = {
-            id: user.id,
-            full_name: userData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            phone: userData.phone || user.user_metadata?.phone || null,
-            user_role: userData.user_role || user.user_metadata?.user_role || 'participant'
-        }
-
-        const { data, error } = await supabase
-            .from('profiles')
-            .insert([profileData])
-            .select()
-            .single()
-
-        if (error) {
-            console.error('Error creating profile:', error)
-            throw error
-        }
-
-        return data
-    }, [])
-
-    const fetchUserProfile = useCallback(async (user) => {
+    // Function to create volunteer record (to be called after sign in)
+    const createVolunteerAfterSignIn = async (user, userData) => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single()
+            console.log('📝 Creating volunteer record after sign in...', {
+                role: userData.role,
+                church: userData.church
+            });
 
-            if (error && error.code === 'PGRST116') {
-                // Profile doesn't exist, create one
-                const { data: newProfile, error: createError } = await createUserProfile(user)
+            const volunteerData = {
+                user_id: user.id,
+                full_name: userData.full_name,
+                phone_number: userData.phone,
+                church: userData.church || '',
+                role: userData.role,
+                status: 'active'
+            };
 
-                if (createError) {
-                    console.error('Error creating profile:', createError)
-                    throw createError
-                }
+            console.log('📤 Inserting volunteer data:', volunteerData);
 
-                setProfile(newProfile)
-                return newProfile
+            const { error: volunteerError } = await supabase
+                .from('volunteers')
+                .insert([volunteerData]);
+
+            if (volunteerError) {
+                console.error('❌ Volunteer insert error:', volunteerError);
+                return false;
+            } else {
+                console.log('✅ Volunteer record created successfully');
+                return true;
             }
-
-            if (error) {
-                console.error('Error fetching profile:', error)
-                throw error
-            }
-
-            setProfile(data)
-            return data
         } catch (error) {
-            console.error('Error in fetchUserProfile:', error)
-            return null
+            console.error('💥 Volunteer creation error:', error);
+            return false;
         }
-    }, [createUserProfile])
-
-    useEffect(() => {
-        let mounted = true
-
-        const initializeAuth = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession()
-
-                if (error) {
-                    console.error('Session error:', error)
-                    if (mounted) setLoading(false)
-                    return
-                }
-
-                if (mounted) {
-                    setUser(session?.user ?? null)
-                    if (session?.user) {
-                        await fetchUserProfile(session.user)
-                    }
-                    setLoading(false)
-                }
-            } catch (error) {
-                console.error('Auth initialization error:', error)
-                if (mounted) {
-                    setLoading(false)
-                }
-            }
-        }
-
-        initializeAuth()
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                if (!mounted) return
-
-                setUser(session?.user ?? null)
-
-                if (session?.user) {
-                    await fetchUserProfile(session.user)
-                    if (event === 'SIGNED_IN') {
-                        addNotification({
-                            type: 'success',
-                            title: 'Welcome!',
-                            message: 'You have successfully signed in.'
-                        })
-                    }
-                } else {
-                    setProfile(null)
-                    if (event === 'SIGNED_OUT') {
-                        addNotification({
-                            type: 'info',
-                            title: 'Signed out',
-                            message: 'You have been signed out successfully.'
-                        })
-                    }
-                }
-
-                setLoading(false)
-            }
-        )
-
-        return () => {
-            mounted = false
-            subscription?.unsubscribe()
-        }
-    }, [addNotification, fetchUserProfile])
+    }
 
     const signUp = async (email, password, userData = {}) => {
         try {
+            console.log('🚀 Starting signup process...', {
+                email: email.substring(0, 10) + '...',
+                hasRole: !!userData.role,
+                hasChurch: !!userData.church
+            });
+
+            // Create auth user
             const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
+                email: email.trim(),
+                password: password.trim(),
                 options: {
                     data: {
-                        full_name: userData.full_name,
-                        phone: userData.phone,
-                        user_role: userData.user_role
+                        full_name: userData.full_name?.trim() || '',
+                        phone: userData.phone?.trim() || '',
+                        user_role: 'volunteer',
+                        // Store volunteer data in metadata for later use
+                        volunteer_role: userData.role,
+                        volunteer_church: userData.church
                     }
                 }
-            })
+            });
 
             if (error) {
-                console.error('Signup error:', error)
-                throw error
+                console.error('❌ Auth signup error:', error);
+                throw error;
             }
 
-            if (data.user) {
-                // Create profile for the new user with explicit user_role
-                await createUserProfile(data.user, {
+            console.log('✅ Auth user created:', data.user?.id);
+
+            // Store volunteer data in localStorage for after first sign in
+            if (userData.role) {
+                const pendingVolunteer = {
+                    user_id: data.user.id,
                     full_name: userData.full_name,
                     phone: userData.phone,
-                    user_role: userData.user_role || 'participant'
-                })
-
-                addNotification({
-                    type: 'success',
-                    title: 'Account created!',
-                    message: data.user.identities?.length === 0
-                        ? 'Please check your email to confirm your account.'
-                        : 'Account created successfully. You can now sign in.'
-                })
+                    role: userData.role,
+                    church: userData.church
+                };
+                localStorage.setItem(`pending_volunteer_${data.user.id}`, JSON.stringify(pendingVolunteer));
+                console.log('💾 Saved volunteer data for after sign in');
             }
 
-            return { data, error: null }
+            addNotification({
+                type: 'success',
+                title: 'Account created!',
+                message: data.user?.identities?.length === 0
+                    ? 'Please check your email to confirm your account, then sign in to complete your volunteer registration.'
+                    : 'Account created successfully. Please sign in to complete your volunteer registration.'
+            });
+
+            console.log('🎉 Signup process completed - redirect to login');
+            return { data, error: null };
+
         } catch (error) {
-            console.error('Signup failed:', error)
+            console.error('💥 Signup process failed:', error);
             addNotification({
                 type: 'error',
                 title: 'Signup failed',
                 message: error.message || 'Please try again with a different email.'
-            })
-            return { data: null, error }
+            });
+            return { data: null, error };
         }
-    }
+    };
 
     const signIn = async (email, password) => {
         try {
@@ -190,23 +121,46 @@ export const AuthProvider = ({ children }) => {
 
             if (error) throw error
 
-            // Wait for profile to load properly
-            const currentProfile = await fetchUserProfile(data.user)
+            console.log('✅ User signed in:', data.user.id);
 
-            if (!currentProfile) {
-                throw new Error('Unable to load user profile')
+            // Check if there's a pending volunteer record to create
+            const pendingVolunteerKey = `pending_volunteer_${data.user.id}`;
+            const pendingVolunteer = localStorage.getItem(pendingVolunteerKey);
+
+            if (pendingVolunteer) {
+                console.log('🔄 Found pending volunteer record, creating now...');
+                const volunteerData = JSON.parse(pendingVolunteer);
+
+                const success = await createVolunteerAfterSignIn(data.user, volunteerData);
+
+                if (success) {
+                    // Remove from localStorage
+                    localStorage.removeItem(pendingVolunteerKey);
+                    addNotification({
+                        type: 'success',
+                        title: 'Volunteer profile completed!',
+                        message: 'Your volunteer registration is now complete.'
+                    });
+                } else {
+                    addNotification({
+                        type: 'warning',
+                        title: 'Volunteer profile pending',
+                        message: 'Your account was created, but we need to complete your volunteer profile. Please try again or contact support.'
+                    });
+                }
             }
 
-            // Allow only volunteers and admins to login
-            if (currentProfile.user_role === 'participant') {
+            // Only volunteers and admins can login - participants don't have login access
+            const userRole = data.user?.user_metadata?.user_role || 'volunteer';
+            if (userRole === 'participant') {
                 await supabase.auth.signOut()
-                throw new Error('Participants should use the registration form. Volunteers and administrators can login to the system.')
+                throw new Error('Only volunteers and administrators can login to the system. Participants are registered by volunteers.')
             }
 
             addNotification({
                 type: 'success',
                 title: 'Welcome back!',
-                message: `Signed in as ${currentProfile.full_name || email}`
+                message: `Signed in as ${data.user?.user_metadata?.full_name || email}`
             })
 
             return { data, error: null }
@@ -225,7 +179,6 @@ export const AuthProvider = ({ children }) => {
         try {
             // Clear local state first to ensure UI updates immediately
             setUser(null)
-            setProfile(null)
 
             const { error } = await supabase.auth.signOut()
 
@@ -246,42 +199,11 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    const updateProfile = async (updates) => {
-        if (!user) throw new Error('No user logged in')
-
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', user.id)
-                .select()
-                .single()
-
-            if (error) throw error
-
-            setProfile(data)
-            addNotification({
-                type: 'success',
-                title: 'Profile updated',
-                message: 'Your profile has been updated successfully.'
-            })
-
-            return { data, error: null }
-        } catch (error) {
-            console.error('Profile update error:', error)
-            addNotification({
-                type: 'error',
-                title: 'Update failed',
-                message: error.message
-            })
-            return { data: null, error }
-        }
-    }
-
-    // Role checking functions
+    // Simple role checking from user metadata
     const hasRole = (roles) => {
-        if (!profile) return false
-        return Array.isArray(roles) ? roles.includes(profile.user_role) : profile.user_role === roles
+        if (!user) return false
+        const userRole = user.user_metadata?.user_role || 'volunteer'
+        return Array.isArray(roles) ? roles.includes(userRole) : userRole === roles
     }
 
     const isAdmin = () => hasRole('admin')
@@ -290,15 +212,101 @@ export const AuthProvider = ({ children }) => {
     const canManageParticipants = () => isAdmin() || isVolunteer()
     const canManageContent = () => isAdmin() || isVolunteer()
 
+    useEffect(() => {
+        let mounted = true
+
+        const initializeAuth = async () => {
+            try {
+                console.log('🔄 Initializing auth...')
+                const { data: { session }, error } = await supabase.auth.getSession()
+
+                if (error) {
+                    console.error('❌ Session error:', error)
+                    if (mounted) {
+                        setLoading(false)
+                    }
+                    return
+                }
+
+                console.log('🔐 Session data:', session)
+
+                if (mounted) {
+                    setUser(session?.user ?? null)
+                    setLoading(false)
+                    console.log('✅ Auth initialization complete')
+                }
+            } catch (error) {
+                console.error('💥 Auth initialization error:', error)
+                if (mounted) {
+                    setLoading(false)
+                }
+            }
+        }
+
+        initializeAuth()
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                console.log('🔄 Auth state changed:', event)
+                if (!mounted) return
+
+                setUser(session?.user ?? null)
+
+                if (session?.user) {
+                    if (event === 'SIGNED_IN') {
+                        addNotification({
+                            type: 'success',
+                            title: 'Welcome!',
+                            message: 'You have successfully signed in.'
+                        })
+                    }
+                }
+
+                setLoading(false)
+            }
+        )
+
+        return () => {
+            mounted = false
+            subscription?.unsubscribe()
+        }
+    }, [addNotification])
+
     const value = {
         user,
-        profile,
+        profile: user ? {
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            phone: user.user_metadata?.phone || null,
+            user_role: user.user_metadata?.user_role || 'volunteer'
+        } : null,
         loading,
         signUp,
         signIn,
         signOut,
-        updateProfile,
-        refreshProfile: () => user && fetchUserProfile(user),
+        updateProfile: async (updates) => {
+            // Update user metadata instead of profiles table
+            const { error } = await supabase.auth.updateUser({
+                data: updates
+            });
+            if (error) throw error;
+
+            // Refresh user data
+            const { data: { user: updatedUser } } = await supabase.auth.getUser();
+            setUser(updatedUser);
+
+            addNotification({
+                type: 'success',
+                title: 'Profile updated',
+                message: 'Your profile has been updated successfully.'
+            });
+
+            return { data: updates, error: null };
+        },
+        refreshProfile: () => supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+            setUser(currentUser);
+            return currentUser;
+        }),
         hasRole,
         isAdmin,
         isVolunteer,
@@ -309,7 +317,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     )
 }

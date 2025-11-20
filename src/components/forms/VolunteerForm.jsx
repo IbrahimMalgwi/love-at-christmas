@@ -1,18 +1,19 @@
 // src/components/forms/VolunteerForm.jsx
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { useVolunteers } from '../../hooks/useData'
 import Button from '../common/Button'
 import Card from '../common/Card'
 import { useNotifications } from '../../hooks/useNotifications'
-import { Mail, Lock, Eye, EyeOff, User, Phone, Church } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Phone, Church, LogIn } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const VolunteerForm = ({ onSuccess }) => {
     const { signUp } = useAuth()
-    const { createVolunteer } = useVolunteers()
     const { addNotification } = useNotifications()
+    const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [registrationSuccess, setRegistrationSuccess] = useState(false)
 
     const [formData, setFormData] = useState({
         full_name: '',
@@ -26,7 +27,15 @@ const VolunteerForm = ({ onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+
+        // Prevent double submission
+        if (loading) {
+            console.log('⏳ Form already submitting, skipping...')
+            return
+        }
+
         setLoading(true)
+        console.log('🚀 Starting volunteer registration...')
 
         // Validation
         if (formData.password !== formData.confirmPassword) {
@@ -60,6 +69,12 @@ const VolunteerForm = ({ onSuccess }) => {
         }
 
         try {
+            console.log('📝 Creating user account...', {
+                email: formData.email,
+                hasRole: !!formData.role,
+                hasChurch: !!formData.church
+            })
+
             // Create user account
             const { data, error } = await signUp(
                 formData.email,
@@ -67,26 +82,20 @@ const VolunteerForm = ({ onSuccess }) => {
                 {
                     full_name: formData.full_name,
                     phone: formData.phone,
-                    user_role: 'volunteer'
+                    role: formData.role,
+                    church: formData.church
                 }
             )
 
-            if (error) throw error
-
-            // Create volunteer profile
-            if (data.user) {
-                const volunteerProfile = {
-                    user_id: data.user.id,
-                    full_name: formData.full_name,
-                    phone_number: formData.phone,
-                    church: formData.church,
-                    role: formData.role
-                }
-
-                await createVolunteer(volunteerProfile)
+            if (error) {
+                console.error('❌ Signup error:', error)
+                throw error
             }
 
-            // Reset form
+            console.log('✅ User account created successfully')
+            setRegistrationSuccess(true)
+
+            // Reset form on success
             setFormData({
                 full_name: '',
                 email: '',
@@ -102,9 +111,10 @@ const VolunteerForm = ({ onSuccess }) => {
             }
 
         } catch (error) {
-            console.error('Registration failed:', error)
+            console.error('💥 Registration failed:', error)
         } finally {
             setLoading(false)
+            console.log('🏁 Registration process completed')
         }
     }
 
@@ -115,12 +125,57 @@ const VolunteerForm = ({ onSuccess }) => {
         })
     }
 
+    const handleGoToLogin = () => {
+        navigate('/login')
+    }
+
+    // Show success message after registration
+    if (registrationSuccess) {
+        return (
+            <Card className="max-w-2xl mx-auto">
+                <div className="p-8 text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <LogIn className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                        Registration Successful!
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                        Your account has been created successfully. Please sign in to complete your volunteer registration and access your dashboard.
+                    </p>
+                    <div className="space-y-4">
+                        <Button
+                            onClick={handleGoToLogin}
+                            className="w-full"
+                            size="lg"
+                        >
+                            Go to Login
+                        </Button>
+                        <Button
+                            onClick={() => setRegistrationSuccess(false)}
+                            variant="outline"
+                            className="w-full"
+                        >
+                            Register Another Volunteer
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+        )
+    }
+
     return (
         <Card className="max-w-2xl mx-auto">
             <div className="p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
                     Volunteer Registration
                 </h2>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-blue-800 text-center">
+                        <strong>Note:</strong> After registration, you'll need to sign in to complete your volunteer profile setup.
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Full Name */}
@@ -282,9 +337,22 @@ const VolunteerForm = ({ onSuccess }) => {
                         {loading ? 'Creating Account...' : 'Register as Volunteer'}
                     </Button>
 
-                    <p className="text-sm text-gray-600 text-center">
-                        After registration, you'll be able to access volunteer features and manage participant registrations.
-                    </p>
+                    <div className="text-center mt-4">
+                        <p className="text-sm text-gray-600">
+                            Already have an account?{' '}
+                            <button
+                                type="button"
+                                onClick={handleGoToLogin}
+                                className="text-primary-600 hover:text-primary-700 font-medium"
+                            >
+                                Sign in here
+                            </button>
+                        </p>
+                    </div>
+
+                    <div className="text-xs text-gray-500 text-center">
+                        Debug: {loading ? 'Loading...' : 'Ready'}
+                    </div>
                 </form>
             </div>
         </Card>

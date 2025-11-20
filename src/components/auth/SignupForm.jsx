@@ -14,8 +14,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         email: '',
         phone: '',
         password: '',
-        confirmPassword: '',
-        user_role: 'volunteer' // Default to volunteer for your use case
+        confirmPassword: ''
     })
     const [error, setError] = useState('')
 
@@ -38,19 +37,20 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
         }
 
         try {
-            // FIXED: Call signUp with correct parameters
+            // Only create volunteer accounts - no participant option
             const { data, error } = await signUp(
                 formData.email,
                 formData.password,
                 {
                     full_name: formData.full_name,
                     phone: formData.phone,
-                    user_role: formData.user_role
+                    user_role: 'volunteer' // Always volunteer
                 }
             )
 
             if (error) throw error
 
+            // Call onSuccess after successful signup
             if (onSuccess) {
                 onSuccess(data)
             }
@@ -64,7 +64,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
     return (
         <Card className="max-w-md mx-auto">
             <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Create Account</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Volunteer Registration</h2>
 
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
@@ -130,28 +130,6 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="user_role" className="block text-sm font-medium text-gray-700 mb-2">
-                            I want to: *
-                        </label>
-                        <select
-                            id="user_role"
-                            required
-                            value={formData.user_role}
-                            onChange={(e) => setFormData({ ...formData, user_role: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        >
-                            <option value="volunteer">Volunteer</option>
-                            <option value="participant">Receive Support</option>
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">
-                            {formData.user_role === 'volunteer'
-                                ? 'Volunteers can register participants and access volunteer features'
-                                : 'Participants can receive support and register for events'
-                            }
-                        </p>
-                    </div>
-
-                    <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                             Password *
                         </label>
@@ -199,7 +177,7 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                         loading={loading}
                         className="w-full"
                     >
-                        Create Account
+                        Register as Volunteer
                     </Button>
                 </form>
 
@@ -212,6 +190,13 @@ const SignupForm = ({ onSuccess, onSwitchToLogin }) => {
                         >
                             Sign in here
                         </button>
+                    </p>
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700 text-center">
+                        <strong>Note:</strong> This registers you as a volunteer. Participants don't need accounts -
+                        they are registered by volunteers through the participant registration form.
                     </p>
                 </div>
             </div>

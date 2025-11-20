@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import { Heart, Users } from 'lucide-react'
 import VolunteerForm from '../components/forms/VolunteerForm'
 import ParticipantForm from '../components/forms/ParticipantForm'
