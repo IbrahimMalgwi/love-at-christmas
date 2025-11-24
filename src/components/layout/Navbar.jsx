@@ -31,8 +31,20 @@ const Navbar = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link to="/" className="flex-shrink-0 flex items-center">
-                            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                ❤️
+                            {/* Logo Option 1: Image Logo */}
+                            <img
+                                src="/logo.png"
+                                alt="Love at Christmas Logo"
+                                className="h-10 w-10 object-contain"
+                                onError={(e) => {
+                                    // Fallback if logo doesn't exist
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            {/* Fallback: Text-based logo */}
+                            <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg hidden">
+                                LAC
                             </div>
                             <span className="ml-3 text-xl font-bold text-gray-800">
                                 Love at Christmas
@@ -40,7 +52,7 @@ const Navbar = () => {
                         </Link>
                     </div>
 
-                    {/* Desktop Menu */}
+                    {/* Rest of the component remains the same */}
                     <div className="hidden md:flex items-center space-x-8">
                         {navItems.map((item) => (
                             <Link

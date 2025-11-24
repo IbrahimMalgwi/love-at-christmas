@@ -10,7 +10,7 @@ const HeroSection = () => {
                         Love at Christmas
                     </h1>
                     <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                        Spreading Joy, Sharing Hope, and Bringing Smiles to Families in Need This Christmas Season
+                        We at Foursquare Gospel Church Sabo are Spreading Joy, Sharing Hope, and Bringing Smiles to Families in Need This Christmas Season
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link
