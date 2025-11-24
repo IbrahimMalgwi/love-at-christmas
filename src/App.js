@@ -1,25 +1,55 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import HomePage from './pages/HomePage';
+import ItemsNeededPage from './pages/ItemsNeededPage';
+import DonationPage from './pages/DonationPage';
+import RegistrationPage from './pages/RegistrationPage';
+import FAQPage from './pages/FAQPage';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <AuthProvider>
+            <Router>
+                <div className="min-h-screen bg-gray-50 flex flex-col">
+                    {/* Don't show navbar on admin login page */}
+                    <Routes>
+                        <Route path="/admin/login" element={<AdminLogin />} />
+                        <Route path="*" element={
+                            <>
+                                <Navbar />
+                                <main className="flex-grow">
+                                    <Routes>
+                                        <Route path="/" element={<HomePage />} />
+                                        <Route path="/items" element={<ItemsNeededPage />} />
+                                        <Route path="/donate" element={<DonationPage />} />
+                                        <Route path="/register" element={<RegistrationPage />} />
+                                        <Route path="/faq" element={<FAQPage />} />
+                                        <Route
+                                            path="/admin/dashboard"
+                                            element={
+                                                <ProtectedRoute>
+                                                    <AdminDashboard />
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        {/* Redirect to home for unknown routes */}
+                                        <Route path="*" element={<HomePage />} />
+                                    </Routes>
+                                </main>
+                                <Footer />
+                            </>
+                        } />
+                    </Routes>
+                </div>
+            </Router>
+        </AuthProvider>
+    );
 }
 
 export default App;
