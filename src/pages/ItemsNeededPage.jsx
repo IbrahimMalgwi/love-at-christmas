@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/ItemsNeededPage.jsx
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { supabase } from '../services/supabase';
 import CategoryFilter from '../components/items/CategoryFilter';
 import ItemCard from '../components/items/ItemCard';
@@ -13,26 +14,50 @@ const ItemsNeededPage = () => {
 
     const categories = [
         { value: 'all', label: 'All Items' },
-        { value: 'clothing', label: 'Clothing' },
-        { value: 'foodstuffs', label: 'Foodstuffs' },
-        { value: 'household', label: 'Household Items' },
-        { value: 'utensils', label: 'Utensils' }
+        { value: 'food_items', label: 'Food Items' },
+        { value: 'shoes', label: 'Shoes' },
+        { value: 'publicity', label: 'Publicity' },
+        { value: 'logistics', label: 'Logistics' },
+        { value: 'cloths', label: 'Cloths' },
+        { value: 'ambiance', label: 'Ambiance' },
+        { value: 'registration', label: 'Registration' },
+        { value: 'refreshment', label: 'Refreshment' }
     ];
 
     useEffect(() => {
         fetchItems();
     }, []);
 
+    // Move filterItems inside useCallback to stabilize the function
+    const filterItems = useCallback(() => {
+        let filtered = items;
+
+        if (selectedCategory !== 'all') {
+            filtered = filtered.filter(item => item.category === selectedCategory);
+        }
+
+        if (searchTerm) {
+            filtered = filtered.filter(item =>
+                item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        setFilteredItems(filtered);
+    }, [items, selectedCategory, searchTerm]); // Add dependencies
+
+    // Now include filterItems in the dependency array
     useEffect(() => {
         filterItems();
-    }, [items, selectedCategory, searchTerm]);
+    }, [filterItems]); // Add filterItems as dependency
 
     const fetchItems = async () => {
         try {
             const { data, error } = await supabase
                 .from('items_inventory')
                 .select('*')
-                .order('category');
+                .order('category')
+                .order('item_name');
 
             if (error) throw error;
             setItems(data || []);
@@ -43,35 +68,21 @@ const ItemsNeededPage = () => {
         }
     };
 
-    const filterItems = () => {
-        let filtered = items;
-
-        if (selectedCategory !== 'all') {
-            filtered = filtered.filter(item => item.category === selectedCategory);
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter(item =>
-                item.item_name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        setFilteredItems(filtered);
-    };
+    // Remove the old filterItems function from here
 
     const calculateTotals = () => {
         const totalNeeded = items.reduce((sum, item) => sum + (item.quantity_needed || 0), 0);
         const totalReceived = items.reduce((sum, item) => sum + (item.quantity_received || 0), 0);
-        const totalValueNeeded = items.reduce((sum, item) =>
-            sum + ((item.quantity_needed || 0) * (item.unit_price_naira || 0)), 0);
-        const totalValueReceived = items.reduce((sum, item) =>
-            sum + ((item.quantity_received || 0) * (item.unit_price_naira || 0)), 0);
+        const totalAmountNeeded = items.reduce((sum, item) =>
+            sum + ((item.quantity_needed || 0) * (item.unit_price || 0)), 0);
+        const totalAmountReceived = items.reduce((sum, item) =>
+            sum + ((item.quantity_received || 0) * (item.unit_price || 0)), 0);
 
         return {
             totalNeeded,
             totalReceived,
-            totalValueNeeded,
-            totalValueReceived,
+            totalAmountNeeded,
+            totalAmountReceived,
             progress: totalNeeded > 0 ? (totalReceived / totalNeeded) * 100 : 0
         };
     };
@@ -113,12 +124,12 @@ const ItemsNeededPage = () => {
                             <div className="text-gray-600">Items Needed</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">₦{totals.totalValueReceived.toLocaleString()}</div>
-                            <div className="text-gray-600">Value Received</div>
+                            <div className="text-2xl font-bold text-green-600">₦{totals.totalAmountReceived.toLocaleString()}</div>
+                            <div className="text-gray-600">Amount Received</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900">₦{totals.totalValueNeeded.toLocaleString()}</div>
-                            <div className="text-gray-600">Total Needed</div>
+                            <div className="text-2xl font-bold text-gray-900">₦{totals.totalAmountNeeded.toLocaleString()}</div>
+                            <div className="text-gray-600">Total Amount</div>
                         </div>
                     </div>
                     <ProgressBar progress={totals.progress} />
@@ -135,7 +146,7 @@ const ItemsNeededPage = () => {
                         <div className="w-full md:w-64">
                             <input
                                 type="text"
-                                placeholder="Search items..."
+                                placeholder="Search items or descriptions..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"

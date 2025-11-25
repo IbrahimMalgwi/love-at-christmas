@@ -1,20 +1,31 @@
+// src/components/items/ItemCard.jsx
 import React from 'react';
 import ProgressBar from './ProgressBar';
 
 const ItemCard = ({ item }) => {
     const quantityRemaining = item.quantity_needed - item.quantity_received;
     const progress = (item.quantity_received / item.quantity_needed) * 100;
-    const valueNeeded = item.quantity_needed * item.unit_price_naira;
-    const valueReceived = item.quantity_received * item.unit_price_naira;
+    const valueNeeded = item.quantity_needed * item.unit_price;
+    // const valueReceived = item.quantity_received * item.unit_price;
 
     const getCategoryIcon = (category) => {
         switch (category) {
-            case 'clothing': return '👕';
-            case 'foodstuffs': return '🍚';
-            case 'household': return '🏠';
-            case 'utensils': return '🍽️';
+            case 'food_items': return '🍚';
+            case 'shoes': return '👟';
+            case 'publicity': return '📢';
+            case 'logistics': return '🚚';
+            case 'cloths': return '👕';
+            case 'ambiance': return '🎨';
+            case 'registration': return '📝';
+            case 'refreshment': return '🥤';
             default: return '📦';
         }
+    };
+
+    const formatCategoryName = (category) => {
+        return category.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
     };
 
     return (
@@ -26,9 +37,16 @@ const ItemCard = ({ item }) => {
                         <h3 className="text-xl font-semibold text-gray-900">{item.item_name}</h3>
                     </div>
                     <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full capitalize">
-            {item.category}
-          </span>
+                        {formatCategoryName(item.category)}
+                    </span>
                 </div>
+
+                {/* Description */}
+                {item.description && (
+                    <div className="mb-4">
+                        <p className="text-gray-600 text-sm">{item.description}</p>
+                    </div>
+                )}
 
                 <div className="space-y-3">
                     <div className="flex justify-between text-sm">
@@ -45,10 +63,10 @@ const ItemCard = ({ item }) => {
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Unit Price:</span>
-                        <span className="font-semibold">₦{item.unit_price_naira?.toLocaleString()}</span>
+                        <span className="font-semibold">₦{item.unit_price?.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm font-semibold border-t pt-2">
-                        <span className="text-gray-700">Total Value:</span>
+                        <span className="text-gray-700">Total Amount:</span>
                         <span>₦{valueNeeded.toLocaleString()}</span>
                     </div>
                 </div>

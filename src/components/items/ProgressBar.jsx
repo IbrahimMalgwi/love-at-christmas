@@ -1,3 +1,4 @@
+// src/components/items/ProgressBar.jsx
 import React from 'react';
 
 const ProgressBar = ({ progress }) => {
