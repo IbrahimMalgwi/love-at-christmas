@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     // Check if user is admin by checking admin_users table
-    const checkAdminStatus = async (user) => {
+    const checkAdminStatus = useCallback(async (user) => {
         try {
             const { data, error } = await supabase
                 .from('admin_users')
@@ -35,7 +35,24 @@ export const AuthProvider = ({ children }) => {
             console.error('Error checking admin status:', error);
             return null;
         }
-    };
+    }, []);
+
+    const getSession = useCallback(async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+
+            if (currentUser) {
+                const adminData = await checkAdminStatus(currentUser);
+                setAdmin(adminData);
+            }
+        } catch (error) {
+            console.error('Error getting session:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [checkAdminStatus]);
 
     useEffect(() => {
         // Get initial session
@@ -59,24 +76,7 @@ export const AuthProvider = ({ children }) => {
         );
 
         return () => subscription.unsubscribe();
-    }, []);
-
-    const getSession = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
-
-            if (currentUser) {
-                const adminData = await checkAdminStatus(currentUser);
-                setAdmin(adminData);
-            }
-        } catch (error) {
-            console.error('Error getting session:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [getSession, checkAdminStatus]);
 
     const signIn = async (email, password) => {
         try {

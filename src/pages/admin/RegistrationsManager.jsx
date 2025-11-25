@@ -1,5 +1,5 @@
 // src/pages/admin/RegistrationsManager.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../services/supabase';
 
 const RegistrationsManager = () => {
@@ -11,31 +11,11 @@ const RegistrationsManager = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    useEffect(() => {
-        filterData();
-    }, [searchTerm, volunteers, participants, activeTab]);
-
-    const fetchData = async () => {
-        try {
-            const [volunteersData, participantsData] = await Promise.all([
-                supabase.from('volunteers').select('*').order('created_at', { ascending: false }),
-                supabase.from('participants').select('*').order('created_at', { ascending: false })
-            ]);
-
-            setVolunteers(volunteersData.data || []);
-            setParticipants(participantsData.data || []);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filterData = () => {
+    const filterData = useCallback(() => {
         if (!searchTerm) {
             setFilteredVolunteers(volunteers);
             setFilteredParticipants(participants);
@@ -61,6 +41,135 @@ const RegistrationsManager = () => {
                 participant.address.toLowerCase().includes(lowerSearch) ||
                 participant.religion.toLowerCase().includes(lowerSearch)
             )
+        );
+    }, [searchTerm, volunteers, participants]);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        filterData();
+        setCurrentPage(1); // Reset to first page when search changes
+    }, [filterData]);
+
+    const fetchData = async () => {
+        try {
+            const [volunteersData, participantsData] = await Promise.all([
+                supabase.from('volunteers').select('*').order('created_at', { ascending: false }),
+                supabase.from('participants').select('*').order('created_at', { ascending: false })
+            ]);
+
+            setVolunteers(volunteersData.data || []);
+            setParticipants(participantsData.data || []);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Pagination functions
+    const getCurrentItems = () => {
+        const items = activeTab === 'volunteers' ? filteredVolunteers : filteredParticipants;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return items.slice(startIndex, endIndex);
+    };
+
+    const totalPages = () => {
+        const totalItems = activeTab === 'volunteers' ? filteredVolunteers.length : filteredParticipants.length;
+        return Math.ceil(totalItems / itemsPerPage);
+    };
+
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const nextPage = () => {
+        if (currentPage < totalPages()) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const prevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const PaginationControls = () => {
+        const totalItems = activeTab === 'volunteers' ? filteredVolunteers.length : filteredParticipants.length;
+        const totalPagesCount = totalPages();
+
+        if (totalPagesCount <= 1) return null;
+
+        return (
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPagesCount}
+                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                        <p className="text-sm text-gray-700">
+                            Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                            <span className="font-medium">
+                                {Math.min(currentPage * itemsPerPage, totalItems)}
+                            </span>{' '}
+                            of <span className="font-medium">{totalItems}</span> results
+                        </p>
+                    </div>
+                    <div>
+                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            <button
+                                onClick={prevPage}
+                                disabled={currentPage === 1}
+                                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="sr-only">Previous</span>
+                                &larr;
+                            </button>
+
+                            {/* Page numbers */}
+                            {Array.from({ length: totalPagesCount }, (_, i) => i + 1).map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => goToPage(page)}
+                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                        currentPage === page
+                                            ? 'z-10 bg-red-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600'
+                                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={nextPage}
+                                disabled={currentPage === totalPagesCount}
+                                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="sr-only">Next</span>
+                                &rarr;
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
         );
     };
 
@@ -118,14 +227,29 @@ const RegistrationsManager = () => {
         );
     }
 
-    const displayVolunteers = searchTerm ? filteredVolunteers : volunteers;
-    const displayParticipants = searchTerm ? filteredParticipants : participants;
+    const displayItems = getCurrentItems();
+    const totalItems = activeTab === 'volunteers' ? filteredVolunteers.length : filteredParticipants.length;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">Registrations Management</h2>
-                <div className="flex space-x-3">
+                <div className="flex items-center space-x-3">
+                    {/* Items per page selector */}
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
+                    >
+                        <option value={5}>5 per page</option>
+                        <option value={10}>10 per page</option>
+                        <option value={25}>25 per page</option>
+                        <option value={50}>50 per page</option>
+                    </select>
+
                     <input
                         type="text"
                         placeholder="Search registrations..."
@@ -156,24 +280,30 @@ const RegistrationsManager = () => {
             <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
                     <button
-                        onClick={() => setActiveTab('volunteers')}
+                        onClick={() => {
+                            setActiveTab('volunteers');
+                            setCurrentPage(1);
+                        }}
                         className={`py-2 px-1 border-b-2 font-medium text-sm ${
                             activeTab === 'volunteers'
                                 ? 'border-red-500 text-red-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     >
-                        Volunteers ({displayVolunteers.length})
+                        Volunteers ({filteredVolunteers.length})
                     </button>
                     <button
-                        onClick={() => setActiveTab('participants')}
+                        onClick={() => {
+                            setActiveTab('participants');
+                            setCurrentPage(1);
+                        }}
                         className={`py-2 px-1 border-b-2 font-medium text-sm ${
                             activeTab === 'participants'
                                 ? 'border-red-500 text-red-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     >
-                        Participants ({displayParticipants.length})
+                        Participants ({filteredParticipants.length})
                     </button>
                 </nav>
             </div>
@@ -182,8 +312,7 @@ const RegistrationsManager = () => {
             {searchTerm && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-blue-700 text-sm">
-                        Showing {activeTab === 'volunteers' ? displayVolunteers.length : displayParticipants.length}
-                        results for "{searchTerm}"
+                        Showing {displayItems.length} of {totalItems} results for "{searchTerm}"
                     </p>
                 </div>
             )}
@@ -219,7 +348,7 @@ const RegistrationsManager = () => {
                             </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                            {displayVolunteers.map((volunteer) => (
+                            {displayItems.map((volunteer) => (
                                 <tr key={volunteer.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{volunteer.full_name}</div>
@@ -260,7 +389,11 @@ const RegistrationsManager = () => {
                             </tbody>
                         </table>
                     </div>
-                    {displayVolunteers.length === 0 && (
+
+                    {/* Pagination */}
+                    <PaginationControls />
+
+                    {filteredVolunteers.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-gray-500">
                                 {searchTerm ? 'No volunteer registrations match your search.' : 'No volunteer registrations found.'}
@@ -301,7 +434,7 @@ const RegistrationsManager = () => {
                             </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                            {displayParticipants.map((participant) => (
+                            {displayItems.map((participant) => (
                                 <tr key={participant.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{participant.full_name}</div>
@@ -343,7 +476,11 @@ const RegistrationsManager = () => {
                             </tbody>
                         </table>
                     </div>
-                    {displayParticipants.length === 0 && (
+
+                    {/* Pagination */}
+                    <PaginationControls />
+
+                    {filteredParticipants.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-gray-500">
                                 {searchTerm ? 'No participant registrations match your search.' : 'No participant registrations found.'}

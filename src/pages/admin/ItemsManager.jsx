@@ -18,6 +18,10 @@ const ItemsManager = () => {
         description: ''
     });
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     const categories = [
         { value: 'food_items', label: 'Food Items' },
         { value: 'shoes', label: 'Shoes' },
@@ -48,6 +52,107 @@ const ItemsManager = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Pagination functions
+    const getCurrentItems = () => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return items.slice(startIndex, endIndex);
+    };
+
+    const totalPages = () => {
+        return Math.ceil(items.length / itemsPerPage);
+    };
+
+    const goToPage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const nextPage = () => {
+        if (currentPage < totalPages()) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const prevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const PaginationControls = () => {
+        const totalPagesCount = totalPages();
+
+        if (totalPagesCount <= 1) return null;
+
+        return (
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPagesCount}
+                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                        <p className="text-sm text-gray-700">
+                            Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                            <span className="font-medium">
+                                {Math.min(currentPage * itemsPerPage, items.length)}
+                            </span>{' '}
+                            of <span className="font-medium">{items.length}</span> results
+                        </p>
+                    </div>
+                    <div>
+                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            <button
+                                onClick={prevPage}
+                                disabled={currentPage === 1}
+                                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="sr-only">Previous</span>
+                                &larr;
+                            </button>
+
+                            {/* Page numbers */}
+                            {Array.from({ length: totalPagesCount }, (_, i) => i + 1).map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => goToPage(page)}
+                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                        currentPage === page
+                                            ? 'z-10 bg-red-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600'
+                                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={nextPage}
+                                disabled={currentPage === totalPagesCount}
+                                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="sr-only">Next</span>
+                                &rarr;
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     const handleSubmit = async (e) => {
@@ -191,12 +296,18 @@ const ItemsManager = () => {
         );
     };
 
-    const selectAllItems = () => {
-        setSelectedItems(
-            selectedItems.length === items.length
-                ? []
-                : items.map(item => item.id)
-        );
+    const selectAllItemsOnPage = () => {
+        const currentItems = getCurrentItems();
+        const allSelected = currentItems.every(item => selectedItems.includes(item.id));
+
+        if (allSelected) {
+            // Deselect all on current page
+            setSelectedItems(prev => prev.filter(id => !currentItems.some(item => item.id === id)));
+        } else {
+            // Select all on current page
+            const newSelected = [...new Set([...selectedItems, ...currentItems.map(item => item.id)])];
+            setSelectedItems(newSelected);
+        }
     };
 
     if (loading) {
@@ -207,11 +318,28 @@ const ItemsManager = () => {
         );
     }
 
+    const currentItems = getCurrentItems();
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">Items Management</h2>
-                <div className="flex space-x-3">
+                <div className="flex items-center space-x-3">
+                    {/* Items per page selector */}
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
+                    >
+                        <option value={5}>5 per page</option>
+                        <option value={10}>10 per page</option>
+                        <option value={25}>25 per page</option>
+                        <option value={50}>50 per page</option>
+                    </select>
+
                     <button
                         onClick={() => setBulkUpdate(!bulkUpdate)}
                         className={`px-4 py-2 rounded-lg font-medium ${
@@ -238,15 +366,15 @@ const ItemsManager = () => {
                         <div>
                             <h3 className="font-semibold text-blue-900">Bulk Update Mode</h3>
                             <p className="text-blue-700 text-sm">
-                                {selectedItems.length} item(s) selected
+                                {selectedItems.length} item(s) selected on current page
                             </p>
                         </div>
                         <div className="flex space-x-3">
                             <button
-                                onClick={selectAllItems}
+                                onClick={selectAllItemsOnPage}
                                 className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
                             >
-                                {selectedItems.length === items.length ? 'Deselect All' : 'Select All'}
+                                {currentItems.every(item => selectedItems.includes(item.id)) ? 'Deselect Page' : 'Select Page'}
                             </button>
                             <button
                                 onClick={handleBulkUpdate}
@@ -369,8 +497,8 @@ const ItemsManager = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     <input
                                         type="checkbox"
-                                        checked={selectedItems.length === items.length && items.length > 0}
-                                        onChange={selectAllItems}
+                                        checked={currentItems.length > 0 && currentItems.every(item => selectedItems.includes(item.id))}
+                                        onChange={selectAllItemsOnPage}
                                         className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                                     />
                                 </th>
@@ -402,7 +530,7 @@ const ItemsManager = () => {
                         </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                        {items.map((item) => {
+                        {currentItems.map((item) => {
                             const amount = item.quantity_needed * item.unit_price;
                             const progress = (item.quantity_received / item.quantity_needed) * 100;
 
@@ -479,6 +607,9 @@ const ItemsManager = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                <PaginationControls />
             </div>
 
             {items.length === 0 && (
