@@ -1,6 +1,5 @@
 import React from 'react';
 import BankDetailsCard from '../components/donation/BankDetailsCard';
-import DonationInstructions from '../components/donation/DonationInstructions';
 
 const DonationPage = () => {
     return (
@@ -9,56 +8,22 @@ const DonationPage = () => {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold text-gray-900 mb-4">Make a Donation</h1>
-                    <p className="text-xl text-gray-600">
-                        Your generous support helps us bring Christmas joy to families in need
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                        Your generous support helps us bring Christmas joy and essential items to families in need this holiday season
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Bank Details */}
-                    <BankDetailsCard />
+                {/* Bank Details */}
+                <BankDetailsCard />
 
-                    {/* Donation Instructions */}
-                    <DonationInstructions />
-                </div>
-
-                {/* Additional Information */}
-                <div className="mt-12 bg-white rounded-lg shadow-md p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">How Your Donation Helps</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            {
-                                icon: '🎁',
-                                title: 'Gift Packages',
-                                description: 'Provide essential items and Christmas gifts for children and families'
-                            },
-                            {
-                                icon: '🍽️',
-                                title: 'Christmas Meals',
-                                description: 'Fund community Christmas dinners and food packages'
-                            },
-                            {
-                                icon: '❤️',
-                                title: 'Community Support',
-                                description: 'Support counseling and family services during the holiday season'
-                            }
-                        ].map((item, index) => (
-                            <div key={index} className="text-center p-4">
-                                <div className="text-4xl mb-4">{item.icon}</div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                                <p className="text-gray-600 text-sm">{item.description}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
 
                 {/* Transparency Statement */}
                 <div className="mt-8 bg-red-50 rounded-lg p-6 border border-red-200">
-                    <h3 className="text-lg font-semibold text-red-900 mb-2">Transparency Statement</h3>
-                    <p className="text-red-800 text-sm">
+                    <h3 className="text-lg font-semibold text-red-900 mb-3 text-center">Transparency Statement</h3>
+                    <p className="text-red-800 text-center">
                         We are committed to transparency in all our operations. All donations are properly
-                        accounted for and used exclusively for the Love at Christmas program. Regular updates
-                        and financial reports are available upon request.
+                        accounted for and used exclusively for the Love at Christmas program.
+                        Every contribution makes a direct impact in bringing joy to families during the holiday season.
                     </p>
                 </div>
             </div>
