@@ -6,7 +6,8 @@ const BankDetailsCard = () => {
     const bankDetails = {
         accountNumber: '1010761266',
         accountName: 'Sabo Foursquare Gospel Church',
-        bankName: 'Zenith Bank PLC'
+        bankName: 'Zenith Bank PLC',
+        description: 'Love at Christmas'
     };
 
     const copyToClipboard = (text) => {
@@ -43,6 +44,11 @@ const BankDetailsCard = () => {
                 <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50">
                     <div className="text-lg font-medium text-gray-700 mb-3">Bank Name</div>
                     <div className="text-2xl font-bold text-gray-900">{bankDetails.bankName}</div>
+                </div>
+
+                <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <div className="text-lg font-medium text-gray-700 mb-3">Description/narration</div>
+                    <div className="text-2xl font-bold text-gray-900">{bankDetails.description}</div>
                 </div>
             </div>
 
