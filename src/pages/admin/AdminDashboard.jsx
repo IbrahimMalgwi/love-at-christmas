@@ -30,9 +30,9 @@ const AdminDashboard = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
-                            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                                ❤️
-                            </div>
+                            {/*<div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">*/}
+                            {/*    ❤️*/}
+                            {/*</div>*/}
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
                                 <p className="text-sm text-gray-500">Love at Christmas Program</p>
