@@ -7,6 +7,8 @@ const ItemsManager = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+    const [bulkUpdate, setBulkUpdate] = useState(false);
+    const [selectedItems, setSelectedItems] = useState([]);
     const [formData, setFormData] = useState({
         category: '',
         item_name: '',
@@ -54,9 +56,10 @@ const ItemsManager = () => {
         try {
             const itemData = {
                 ...formData,
-                quantity_needed: parseInt(formData.quantity_needed),
-                quantity_received: parseInt(formData.quantity_received),
-                unit_price: parseFloat(formData.unit_price)
+                quantity_needed: parseFloat(formData.quantity_needed),
+                quantity_received: parseFloat(formData.quantity_received),
+                unit_price: parseFloat(formData.unit_price),
+                updated_at: new Date().toISOString()
             };
 
             if (editingItem) {
@@ -93,6 +96,8 @@ const ItemsManager = () => {
         });
         setEditingItem(null);
         setShowForm(false);
+        setBulkUpdate(false);
+        setSelectedItems([]);
     };
 
     const handleEdit = (item) => {
@@ -129,7 +134,10 @@ const ItemsManager = () => {
         try {
             const { error } = await supabase
                 .from('items_inventory')
-                .update({ [field]: value })
+                .update({
+                    [field]: value,
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', id);
 
             if (error) throw error;
@@ -140,21 +148,117 @@ const ItemsManager = () => {
         }
     };
 
+    const handleBulkUpdate = async () => {
+        if (selectedItems.length === 0) {
+            alert('Please select items to update');
+            return;
+        }
+
+        const newQuantity = prompt('Enter new received quantity for selected items:');
+        if (newQuantity === null) return;
+
+        const quantity = parseFloat(newQuantity);
+        if (isNaN(quantity) || quantity < 0) {
+            alert('Please enter a valid number');
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('items_inventory')
+                .update({
+                    quantity_received: quantity,
+                    updated_at: new Date().toISOString()
+                })
+                .in('id', selectedItems);
+
+            if (error) throw error;
+
+            setSelectedItems([]);
+            fetchItems();
+            alert(`Updated ${selectedItems.length} items successfully`);
+        } catch (error) {
+            console.error('Error bulk updating:', error);
+            alert('Failed to update items: ' + error.message);
+        }
+    };
+
+    const toggleSelectItem = (id) => {
+        setSelectedItems(prev =>
+            prev.includes(id)
+                ? prev.filter(itemId => itemId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const selectAllItems = () => {
+        setSelectedItems(
+            selectedItems.length === items.length
+                ? []
+                : items.map(item => item.id)
+        );
+    };
+
     if (loading) {
-        return <div>Loading items...</div>;
+        return (
+            <div className="flex justify-center items-center py-12">
+                <div className="text-lg">Loading items...</div>
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">Items Management</h2>
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700"
-                >
-                    Add New Item
-                </button>
+                <div className="flex space-x-3">
+                    <button
+                        onClick={() => setBulkUpdate(!bulkUpdate)}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            bulkUpdate
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-600 text-white hover:bg-gray-700'
+                        }`}
+                    >
+                        {bulkUpdate ? 'Cancel Bulk Update' : 'Bulk Update'}
+                    </button>
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700"
+                    >
+                        Add New Item
+                    </button>
+                </div>
             </div>
+
+            {/* Bulk Update Controls */}
+            {bulkUpdate && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-semibold text-blue-900">Bulk Update Mode</h3>
+                            <p className="text-blue-700 text-sm">
+                                {selectedItems.length} item(s) selected
+                            </p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={selectAllItems}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                            >
+                                {selectedItems.length === items.length ? 'Deselect All' : 'Select All'}
+                            </button>
+                            <button
+                                onClick={handleBulkUpdate}
+                                disabled={selectedItems.length === 0}
+                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Update Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add/Edit Form */}
             {showForm && (
@@ -199,11 +303,12 @@ const ItemsManager = () => {
                             </label>
                             <input
                                 type="number"
+                                step="0.01"
                                 value={formData.quantity_needed}
                                 onChange={(e) => setFormData({ ...formData, quantity_needed: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
                                 required
-                                min="1"
+                                min="0"
                             />
                         </div>
 
@@ -260,6 +365,16 @@ const ItemsManager = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                         <tr>
+                            {bulkUpdate && (
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.length === items.length && items.length > 0}
+                                        onChange={selectAllItems}
+                                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                    />
+                                </th>
+                            )}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Item
                             </th>
@@ -289,8 +404,20 @@ const ItemsManager = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                         {items.map((item) => {
                             const amount = item.quantity_needed * item.unit_price;
+                            const progress = (item.quantity_received / item.quantity_needed) * 100;
+
                             return (
                                 <tr key={item.id} className="hover:bg-gray-50">
+                                    {bulkUpdate && (
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItems.includes(item.id)}
+                                                onChange={() => toggleSelectItem(item.id)}
+                                                className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                            />
+                                        </td>
+                                    )}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{item.item_name}</div>
                                     </td>
@@ -300,7 +427,7 @@ const ItemsManager = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                                        <div className="text-sm text-gray-900 max-w-xs">
                                             {item.description || '-'}
                                         </div>
                                     </td>
@@ -310,11 +437,21 @@ const ItemsManager = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <input
                                             type="number"
+                                            step="0.01"
                                             value={item.quantity_received}
-                                            onChange={(e) => updateQuantity(item.id, 'quantity_received', parseInt(e.target.value) || 0)}
-                                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                                            onChange={(e) => updateQuantity(item.id, 'quantity_received', parseFloat(e.target.value) || 0)}
+                                            className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
                                             min="0"
                                         />
+                                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                            <div
+                                                className="bg-green-600 h-2 rounded-full"
+                                                style={{ width: `${Math.min(progress, 100)}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-500 text-center mt-1">
+                                            {progress.toFixed(1)}%
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         ₦{item.unit_price?.toLocaleString()}

@@ -1,3 +1,4 @@
+// src/pages/admin/AdminDashboard.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ItemsManager from './ItemsManager';

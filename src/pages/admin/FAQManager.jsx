@@ -1,3 +1,4 @@
+//src/pages/admin/FAQManager.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 

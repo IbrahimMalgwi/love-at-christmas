@@ -1,5 +1,6 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, adminAuth } from '../services/supabase';
+import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
 
@@ -16,6 +17,26 @@ export const AuthProvider = ({ children }) => {
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Check if user is admin by checking admin_users table
+    const checkAdminStatus = async (user) => {
+        try {
+            const { data, error } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('email', user.email)
+                .single();
+
+            if (error || !data) {
+                return null;
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error checking admin status:', error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         // Get initial session
         getSession();
@@ -23,10 +44,11 @@ export const AuthProvider = ({ children }) => {
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                setUser(session?.user ?? null);
+                const currentUser = session?.user ?? null;
+                setUser(currentUser);
 
-                if (session?.user) {
-                    const adminData = await adminAuth.getAdminUser();
+                if (currentUser) {
+                    const adminData = await checkAdminStatus(currentUser);
                     setAdmin(adminData);
                 } else {
                     setAdmin(null);
@@ -42,10 +64,11 @@ export const AuthProvider = ({ children }) => {
     const getSession = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
 
-            if (session?.user) {
-                const adminData = await adminAuth.getAdminUser();
+            if (currentUser) {
+                const adminData = await checkAdminStatus(currentUser);
                 setAdmin(adminData);
             }
         } catch (error) {
@@ -65,15 +88,13 @@ export const AuthProvider = ({ children }) => {
             if (error) throw error;
 
             // Check if user is admin
-            const isAdmin = await adminAuth.isAdmin();
-            if (!isAdmin) {
+            const adminData = await checkAdminStatus(data.user);
+            if (!adminData) {
                 await signOut();
                 throw new Error('Access denied. Admin privileges required.');
             }
 
-            const adminData = await adminAuth.getAdminUser();
             setAdmin(adminData);
-
             return { user: data.user, admin: adminData };
         } catch (error) {
             throw error;
