@@ -39,7 +39,7 @@ const Footer = () => {
                             >
                                 <span className="sr-only">Instagram</span>
                                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                                    <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987c6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.611-3.198-1.558a4.16 4.16 0 01-.84-2.439c0-1.088.417-2.14 1.17-2.91a4.165 4.165 0 012.868-1.16c1.297 0 2.448.611 3.198 1.558.438.561.695 1.258.73 1.987h-6.27v.772h6.27a4.16 4.16 0 01-.73 1.987 4.165 4.165 0 01-3.198 1.558zm7.143-5.832h-1.5v1.5h1.5v-1.5zm1.5 0h-1.5v1.5h1.5v-1.5z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987c6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.611-3.198-1.558a4.16 4.16 0 01-.84-2.439c0-1.088.417-2.14 1.17-2.91a4.165 4.165 0 012.868-1.16c1.297 0 2.448.611 3.198 1.558.438.561.695 1.258.73 1.987h-6.27v.772h6.27a4.16 4.16 0 01-.73 1.987a4.165 4.165 0 01-3.198 1.558zm7.143-5.832h-1.5v1.5h1.5v-1.5zm1.5 0h-1.5v1.5h1.5v-1.5z" clipRule="evenodd" />
                                 </svg>
                             </a>
                         </div>
@@ -53,7 +53,9 @@ const Footer = () => {
                             <li><Link to="/items" className="text-gray-300 hover:text-white transition-colors">Items Needed</Link></li>
                             <li><Link to="/donate" className="text-gray-300 hover:text-white transition-colors">Make a Donation</Link></li>
                             <li><Link to="/register" className="text-gray-300 hover:text-white transition-colors">Register</Link></li>
+                            <li><Link to="/gallery" className="text-gray-300 hover:text-white transition-colors">Gallery</Link></li>
                             <li><Link to="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</Link></li>
+
                         </ul>
                     </div>
 
@@ -64,17 +66,16 @@ const Footer = () => {
                         <ul className="space-y-2 text-gray-300">
                             <li>Email: info@loveatchristmas.org</li>
                             <li>Phone: +234 800 000 0000</li>
-                            <li>Address: Lagos, Nigeria</li>
+                            <li>32A CCommercial Avenue Sabo Yaba, Lagos, Nigeria</li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
                     <p className="text-gray-300 text-sm">
-                        &copy; 2024 Love at Christmas Program. All rights reserved.
+                        &copy; 2025 Love at Christmas Program. All rights reserved.
                     </p>
                     <div className="mt-4 md:mt-0 flex space-x-6 text-sm text-gray-300">
-                        {/* Placeholder links - replace with actual routes when created */}
                         <button
                             onClick={() => alert('Privacy Policy page coming soon!')}
                             className="hover:text-white transition-colors cursor-pointer"

@@ -12,6 +12,7 @@ const Navbar = () => {
         { name: 'Items Needed', path: '/items' },
         { name: 'Donate', path: '/donate' },
         { name: 'Register', path: '/register' },
+        { name: 'Gallery', path: '/gallery' },
         { name: 'FAQ', path: '/faq' },
     ];
 
@@ -31,7 +32,6 @@ const Navbar = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link to="/" className="flex-shrink-0 flex items-center">
-                            {/* Logo Option 1: Image Logo */}
                             <img
                                 src="/logo.png"
                                 alt="Love at Christmas Logo"
@@ -52,7 +52,7 @@ const Navbar = () => {
                         </Link>
                     </div>
 
-                    {/* Rest of the component remains the same */}
+                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
                         {navItems.map((item) => (
                             <Link

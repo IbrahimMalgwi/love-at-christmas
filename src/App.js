@@ -8,9 +8,11 @@ import ItemsNeededPage from './pages/ItemsNeededPage';
 import DonationPage from './pages/DonationPage';
 import RegistrationPage from './pages/RegistrationPage';
 import FAQPage from './pages/FAQPage';
+import GalleryPage from './pages/GalleryPage'; // Add this import
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import GalleryManager from './pages/admin/GalleryManager'; // Add this import
 
 function App() {
     return (
@@ -30,11 +32,20 @@ function App() {
                                         <Route path="/donate" element={<DonationPage />} />
                                         <Route path="/register" element={<RegistrationPage />} />
                                         <Route path="/faq" element={<FAQPage />} />
+                                        <Route path="/gallery" element={<GalleryPage />} /> {/* Add this route */}
                                         <Route
                                             path="/admin/dashboard"
                                             element={
                                                 <ProtectedRoute>
                                                     <AdminDashboard />
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/admin/gallery"
+                                            element={
+                                                <ProtectedRoute>
+                                                    <GalleryManager />
                                                 </ProtectedRoute>
                                             }
                                         />

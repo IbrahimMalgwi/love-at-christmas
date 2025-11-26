@@ -1,9 +1,9 @@
-// src/pages/admin/AdminDashboard.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ItemsManager from './ItemsManager';
 import RegistrationsManager from './RegistrationsManager';
 import FAQManager from './FAQManager';
+import GalleryManager from './GalleryManager'; // Add this import
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('items');
@@ -12,7 +12,8 @@ const AdminDashboard = () => {
     const tabs = [
         { id: 'items', name: 'Items Management', icon: '📦' },
         { id: 'registrations', name: 'Registrations', icon: '👥' },
-        { id: 'faqs', name: 'FAQs', icon: '❓' }
+        { id: 'faqs', name: 'FAQs', icon: '❓' },
+        { id: 'gallery', name: 'Gallery', icon: '🖼️' } // Add this tab
     ];
 
     const handleLogout = async () => {
@@ -23,6 +24,21 @@ const AdminDashboard = () => {
         }
     };
 
+    const renderActiveTab = () => {
+        switch (activeTab) {
+            case 'items':
+                return <ItemsManager />;
+            case 'registrations':
+                return <RegistrationsManager />;
+            case 'faqs':
+                return <FAQManager />;
+            case 'gallery':
+                return <GalleryManager />;
+            default:
+                return <ItemsManager />;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -30,9 +46,6 @@ const AdminDashboard = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-6">
                         <div className="flex items-center">
-                            {/*<div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">*/}
-                            {/*    ❤️*/}
-                            {/*</div>*/}
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
                                 <p className="text-sm text-gray-500">Love at Christmas Program</p>
@@ -78,9 +91,7 @@ const AdminDashboard = () => {
 
             {/* Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {activeTab === 'items' && <ItemsManager />}
-                {activeTab === 'registrations' && <RegistrationsManager />}
-                {activeTab === 'faqs' && <FAQManager />}
+                {renderActiveTab()}
             </main>
         </div>
     );
