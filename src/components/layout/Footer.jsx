@@ -14,8 +14,7 @@ const Footer = () => {
                             <span className="text-xl font-bold">Love at Christmas</span>
                         </div>
                         <p className="text-gray-300 mb-4 max-w-md">
-                            Bringing hope and joy to families in need during the Christmas season.
-                            Join us in making a difference in our community.
+                            The Foursquare Gospel Church Sabo... Giving hope and sharing Jesus joy to all
                         </p>
                         <div className="flex space-x-4">
                             {/* Social media links - replace with actual URLs when available */}

@@ -33,28 +33,6 @@ const RegistrationPage = () => {
                         <ParticipantForm />
                     )}
                 </div>
-
-                {/* Additional Information */}
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-red-50 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-red-900 mb-3">For Volunteers</h3>
-                        <ul className="text-red-800 text-sm space-y-2">
-                            <li>• Training and orientation provided</li>
-                            <li>• Flexible scheduling options</li>
-                            <li>• Certificate of participation</li>
-                            <li>• Team building activities</li>
-                        </ul>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-green-900 mb-3">For Participants</h3>
-                        <ul className="text-green-800 text-sm space-y-2">
-                            <li>• Complete confidentiality</li>
-                            <li>• No cost involved</li>
-                            <li>• Family-friendly environment</li>
-                            <li>• Ongoing support available</li>
-                        </ul>
-                    </div>
-                </div>
             </div>
         </div>
     );

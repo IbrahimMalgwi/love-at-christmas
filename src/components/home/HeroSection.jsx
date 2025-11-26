@@ -10,20 +10,20 @@ const HeroSection = () => {
                         Love at Christmas
                     </h1>
                     <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                        We at Foursquare Gospel Church Sabo are Spreading Joy, Sharing Hope, and Bringing Smiles to Families in Need This Christmas Season
+                        The Foursquare Gospel Church Sabo... Giving hope and sharing Jesus joy to all
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link
-                            to="/register"
+                            to="/donate"
                             className="bg-white text-red-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-lg"
                         >
-                            Join Our Mission
+                            Make a Donation
                         </Link>
                         <Link
                             to="/items"
                             className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-red-600 transition-colors text-lg"
                         >
-                            See What's Needed
+                            Items Needed
                         </Link>
                     </div>
                 </div>
