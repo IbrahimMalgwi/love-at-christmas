@@ -91,7 +91,7 @@ const MissionVision = () => {
                         <p className="text-lg text-gray-700 italic">
                             "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
                         </p>
-                        <p className="text-red-600 font-semibold mt-2">- John 3:16</p>
+                        <p className="text-red-600 font-semibold mt-2"> John 3:16</p>
                     </div>
                 </div>
             </div>
