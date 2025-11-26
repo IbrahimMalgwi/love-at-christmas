@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GalleryImageCard from '../../components/gallery/GalleryImageCard';
 import GalleryUploadForm from '../../components/gallery/GalleryUploadForm';
 import { supabase } from '../../services/supabase';
-import FileUploadService from '../../services/fileUploadService'; // Add this import
+import FileUploadService from '../../services/fileUploadService';
 
 const GalleryManager = () => {
     const [images, setImages] = useState([]);
@@ -17,10 +17,17 @@ const GalleryManager = () => {
 
     const fetchGalleryData = async () => {
         try {
+            console.log('Fetching gallery data...'); // Debug log
+
             const [imagesResponse, categoriesResponse] = await Promise.all([
                 supabase
                     .from('gallery_images')
-                    .select('*, gallery_categories(name)')
+                    .select(`
+                        *,
+                        gallery_categories (
+                            name
+                        )
+                    `)
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('gallery_categories')
@@ -28,13 +35,25 @@ const GalleryManager = () => {
                     .order('name')
             ]);
 
-            if (imagesResponse.error) throw imagesResponse.error;
-            if (categoriesResponse.error) throw categoriesResponse.error;
+            if (imagesResponse.error) {
+                console.error('Images fetch error:', imagesResponse.error);
+                throw imagesResponse.error;
+            }
+            if (categoriesResponse.error) {
+                console.error('Categories fetch error:', categoriesResponse.error);
+                throw categoriesResponse.error;
+            }
 
-            setImages(imagesResponse.data);
-            setCategories(categoriesResponse.data);
+            console.log('Categories fetched:', categoriesResponse.data); // Debug log
+            console.log('Images fetched:', imagesResponse.data); // Debug log
+
+            setImages(imagesResponse.data || []);
+            setCategories(categoriesResponse.data || []);
         } catch (error) {
             console.error('Error fetching gallery data:', error);
+            // Set empty arrays on error
+            setImages([]);
+            setCategories([]);
         } finally {
             setLoading(false);
         }
@@ -42,14 +61,21 @@ const GalleryManager = () => {
 
     const handleCreateImage = async (formData) => {
         try {
-            const { error } = await supabase
+            console.log('Creating image with data:', formData); // Debug log
+
+            const { data, error } = await supabase
                 .from('gallery_images')
-                .insert([formData]);
+                .insert([{
+                    ...formData,
+                    is_active: true
+                }])
+                .select();
 
             if (error) throw error;
 
+            console.log('Image created successfully:', data); // Debug log
             setShowForm(false);
-            fetchGalleryData();
+            fetchGalleryData(); // Refresh the list
         } catch (error) {
             console.error('Error creating image:', error);
             alert('Error creating image: ' + error.message);
@@ -58,15 +84,19 @@ const GalleryManager = () => {
 
     const handleUpdateImage = async (formData) => {
         try {
-            const { error } = await supabase
+            console.log('Updating image with data:', formData); // Debug log
+
+            const { data, error } = await supabase
                 .from('gallery_images')
                 .update(formData)
-                .eq('id', editingImage.id);
+                .eq('id', editingImage.id)
+                .select();
 
             if (error) throw error;
 
+            console.log('Image updated successfully:', data); // Debug log
             setEditingImage(null);
-            fetchGalleryData();
+            fetchGalleryData(); // Refresh the list
         } catch (error) {
             console.error('Error updating image:', error);
             alert('Error updating image: ' + error.message);
@@ -74,7 +104,6 @@ const GalleryManager = () => {
     };
 
     const handleDeleteImage = async (imageId) => {
-        // Use window.confirm instead of just confirm
         if (!window.confirm('Are you sure you want to delete this image?')) return;
 
         try {
@@ -112,7 +141,13 @@ const GalleryManager = () => {
     };
 
     if (loading) {
-        return <div className="container mx-auto px-4 py-8">Loading...</div>;
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="flex justify-center items-center h-64">
+                    <div className="text-lg">Loading gallery manager...</div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -125,6 +160,13 @@ const GalleryManager = () => {
                 >
                     Upload New Image
                 </button>
+            </div>
+
+            {/* Debug info */}
+            <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+                <p className="text-sm text-gray-600">
+                    Categories loaded: {categories.length} | Images loaded: {images.length}
+                </p>
             </div>
 
             {showForm && (
@@ -152,7 +194,10 @@ const GalleryManager = () => {
                 {images.map(image => (
                     <GalleryImageCard
                         key={image.id}
-                        image={image}
+                        image={{
+                            ...image,
+                            category_name: image.gallery_categories?.name || 'Uncategorized'
+                        }}
                         onEdit={setEditingImage}
                         onDelete={handleDeleteImage}
                         isAdmin={true}
@@ -163,6 +208,9 @@ const GalleryManager = () => {
             {images.length === 0 && (
                 <div className="text-center py-12">
                     <p className="text-gray-500 text-lg">No images uploaded yet.</p>
+                    <p className="text-gray-400 text-sm mt-2">
+                        Click "Upload New Image" to add your first image to the gallery.
+                    </p>
                 </div>
             )}
         </div>

@@ -19,7 +19,12 @@ const GalleryPage = () => {
             const [imagesResponse, categoriesResponse] = await Promise.all([
                 supabase
                     .from('gallery_images')
-                    .select('*, gallery_categories(name)')
+                    .select(`
+            *,
+            gallery_categories (
+              name
+            )
+          `)
                     .eq('is_active', true)
                     .order('created_at', { ascending: false }),
                 supabase
@@ -31,10 +36,13 @@ const GalleryPage = () => {
             if (imagesResponse.error) throw imagesResponse.error;
             if (categoriesResponse.error) throw categoriesResponse.error;
 
-            setImages(imagesResponse.data);
-            setCategories(categoriesResponse.data);
+            console.log('Fetched images:', imagesResponse.data); // Debug log
+            setImages(imagesResponse.data || []);
+            setCategories(categoriesResponse.data || []);
         } catch (error) {
             console.error('Error fetching gallery data:', error);
+            setImages([]);
+            setCategories([]);
         } finally {
             setLoading(false);
         }
@@ -43,14 +51,20 @@ const GalleryPage = () => {
     const filteredImages = images.filter(image => {
         const matchesCategory = !selectedCategory || image.category_id === selectedCategory;
         const matchesSearch = !searchTerm ||
-            image.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            image.description.toLowerCase().includes(searchTerm.toLowerCase());
+            image.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            image.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
         return matchesCategory && matchesSearch;
     });
 
     if (loading) {
-        return <div className="container mx-auto px-4 py-8">Loading gallery...</div>;
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="flex justify-center items-center h-64">
+                    <div className="text-lg">Loading gallery...</div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -64,18 +78,24 @@ const GalleryPage = () => {
                 onSearch={setSearchTerm}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredImages.map(image => (
-                    <GalleryImageCard
-                        key={image.id}
-                        image={image}
-                    />
-                ))}
-            </div>
-
-            {filteredImages.length === 0 && (
+            {filteredImages.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredImages.map(image => (
+                        <GalleryImageCard
+                            key={image.id}
+                            image={{
+                                ...image,
+                                // Ensure category name is accessible
+                                category_name: image.gallery_categories?.name || 'Uncategorized'
+                            }}
+                        />
+                    ))}
+                </div>
+            ) : (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No images found.</p>
+                    <p className="text-gray-500 text-lg">
+                        {images.length === 0 ? 'No images have been uploaded yet.' : 'No images found matching your criteria.'}
+                    </p>
                 </div>
             )}
         </div>
