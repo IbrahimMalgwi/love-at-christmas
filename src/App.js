@@ -13,6 +13,7 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import GalleryManager from './pages/admin/GalleryManager';
+import ItemsReceivedPage  from "./pages/admin/ItemsReceivedPage";
 
 function App() {
     return (
@@ -54,6 +55,14 @@ function App() {
                                             element={
                                                 <ProtectedRoute>
                                                     <GalleryManager />
+                                                </ProtectedRoute>
+                                            }
+                                        />
+                                        <Route
+                                            path="/admin/items-received"
+                                            element={
+                                                <ProtectedRoute>
+                                                    <ItemsReceivedPage />
                                                 </ProtectedRoute>
                                             }
                                         />

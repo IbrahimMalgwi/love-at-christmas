@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import ItemsManager from './ItemsManager';
 import RegistrationsManager from './RegistrationsManager';
 import FAQManager from './FAQManager';
-import GalleryManager from './GalleryManager'; // Add this import
+import GalleryManager from './GalleryManager';
+import ItemsReceivedPage from './ItemsReceivedPage'; // Add this import
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('items');
@@ -11,9 +12,10 @@ const AdminDashboard = () => {
 
     const tabs = [
         { id: 'items', name: 'Items Management', icon: '📦' },
+        { id: 'received', name: 'Items Received', icon: '✅' }, // Add this tab
         { id: 'registrations', name: 'Registrations', icon: '👥' },
         { id: 'faqs', name: 'FAQs', icon: '❓' },
-        { id: 'gallery', name: 'Gallery', icon: '🖼️' } // Add this tab
+        { id: 'gallery', name: 'Gallery', icon: '🖼️' }
     ];
 
     const handleLogout = async () => {
@@ -28,6 +30,8 @@ const AdminDashboard = () => {
         switch (activeTab) {
             case 'items':
                 return <ItemsManager />;
+            case 'received':
+                return <ItemsReceivedPage />;
             case 'registrations':
                 return <RegistrationsManager />;
             case 'faqs':
