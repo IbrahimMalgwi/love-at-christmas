@@ -7,14 +7,23 @@ const Navbar = () => {
     const location = useLocation();
     const { isAdmin, signOut } = useAuth();
 
-    const navItems = [
+    // Base navigation items for all users
+    const baseNavItems = [
         { name: 'Home', path: '/' },
-        { name: 'Items Needed', path: '/items' },
         { name: 'Donate', path: '/donate' },
         { name: 'Register', path: '/register' },
         { name: 'Gallery', path: '/gallery' },
         { name: 'FAQ', path: '/faq' },
     ];
+
+    // Add Items Needed only for admin users
+    const navItems = isAdmin
+        ? [
+            ...baseNavItems.slice(0, 1), // Home
+            { name: 'Items Needed', path: '/items' },
+            ...baseNavItems.slice(1) // Rest of the items
+        ]
+        : baseNavItems;
 
     const isActive = (path) => location.pathname === path;
 

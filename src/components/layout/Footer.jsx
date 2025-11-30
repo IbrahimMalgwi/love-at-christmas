@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const Footer = () => {
+    const { isAdmin } = useAuth();
+
     return (
         <footer className="bg-gray-800 text-white">
             <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -21,7 +24,7 @@ const Footer = () => {
                             The Foursquare Gospel Church Sabo... Giving hope and sharing Jesus joy to all
                         </p>
                         <div className="flex space-x-4">
-                            {/* Social media links - replace with actual URLs when available */}
+                            {/* Social media links */}
                             <a
                                 href="https://facebook.com"
                                 target="_blank"
@@ -54,7 +57,10 @@ const Footer = () => {
                             Quick Links
                         </h3>
                         <ul className="space-y-2">
-                            <li><Link to="/items" className="text-gray-300 hover:text-white transition-colors">Items Needed</Link></li>
+                            {/* Only show Items Needed link for admin users */}
+                            {isAdmin && (
+                                <li><Link to="/items" className="text-gray-300 hover:text-white transition-colors">Items Needed</Link></li>
+                            )}
                             <li><Link to="/donate" className="text-gray-300 hover:text-white transition-colors">Make a Donation</Link></li>
                             <li><Link to="/register" className="text-gray-300 hover:text-white transition-colors">Register</Link></li>
                             <li><Link to="/gallery" className="text-gray-300 hover:text-white transition-colors">Gallery</Link></li>

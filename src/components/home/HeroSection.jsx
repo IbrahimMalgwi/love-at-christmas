@@ -20,10 +20,10 @@ const HeroSection = () => {
                             Make a Donation
                         </Link>
                         <Link
-                            to="/items"
+                            to="/register"
                             className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-red-600 transition-colors text-lg"
                         >
-                            Items Needed
+                            Register
                         </Link>
                     </div>
                 </div>
