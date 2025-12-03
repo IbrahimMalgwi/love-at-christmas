@@ -3,36 +3,73 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase credentials. Please check your .env file.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+    }
+});
 
 // Admin authentication helper
 export const adminAuth = {
     // Check if user is admin
     isAdmin: async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return false
+        try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) return false;
 
-        const { data } = await supabase
-            .from('admin_users')
-            .select('id')
-            .eq('id', user.id)
-            .single()
+            const { data, error } = await supabase
+                .from('admin_users')
+                .select('id')
+                .eq('id', user.id)
+                .single();
 
-        return !!data
+            if (error) {
+                // Handle "no rows returned" error
+                if (error.code === 'PGRST116') {
+                    return false;
+                }
+                console.error('Error checking admin status:', error);
+                return false;
+            }
+
+            return !!data;
+        } catch (error) {
+            console.error('Error in isAdmin:', error);
+            return false;
+        }
     },
 
     // Get admin user data
     getAdminUser: async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return null
+        try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) return null;
 
-        const { data } = await supabase
-            .from('admin_users')
-            .select('*')
-            .eq('id', user.id)
-            .single()
+            const { data, error } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('id', user.id)
+                .single();
 
-        return data
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    return null;
+                }
+                throw error;
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error in getAdminUser:', error);
+            return null;
+        }
     },
 
     // Create admin user (run this once to create your first admin)
@@ -41,9 +78,9 @@ export const adminAuth = {
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
-        })
+        });
 
-        if (authError) throw authError
+        if (authError) throw authError;
 
         // Then add to admin_users table
         const { error: adminError } = await supabase
@@ -54,10 +91,10 @@ export const adminAuth = {
                     email,
                     full_name: fullName
                 }
-            ])
+            ]);
 
-        if (adminError) throw adminError
+        if (adminError) throw adminError;
 
-        return authData.user
+        return authData.user;
     }
-}
+};

@@ -19,14 +19,22 @@ export const AuthProvider = ({ children }) => {
 
     // Check if user is admin by checking admin_users table
     const checkAdminStatus = useCallback(async (user) => {
+        if (!user) return null;
+
         try {
             const { data, error } = await supabase
                 .from('admin_users')
                 .select('*')
-                .eq('email', user.email)
+                .eq('id', user.id)  // Changed from email to id
                 .single();
 
-            if (error || !data) {
+            if (error) {
+                // Handle "no rows returned" error gracefully
+                if (error.code === 'PGRST116') {
+                    console.log('User is not an admin');
+                    return null;
+                }
+                console.error('Error checking admin status:', error);
                 return null;
             }
 
@@ -39,7 +47,14 @@ export const AuthProvider = ({ children }) => {
 
     const getSession = useCallback(async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabase.auth.getSession();
+
+            if (error) {
+                console.error('Error getting session:', error);
+                setLoading(false);
+                return;
+            }
+
             const currentUser = session?.user ?? null;
             setUser(currentUser);
 
@@ -48,7 +63,7 @@ export const AuthProvider = ({ children }) => {
                 setAdmin(adminData);
             }
         } catch (error) {
-            console.error('Error getting session:', error);
+            console.error('Error in getSession:', error);
         } finally {
             setLoading(false);
         }
@@ -61,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                console.log('Auth state changed:', event);
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
 
@@ -85,18 +101,23 @@ export const AuthProvider = ({ children }) => {
                 password,
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Login error:', error.message);
+                throw new Error(error.message || 'Login failed');
+            }
 
             // Check if user is admin
             const adminData = await checkAdminStatus(data.user);
             if (!adminData) {
-                await signOut();
+                // Sign out if not admin
+                await supabase.auth.signOut();
                 throw new Error('Access denied. Admin privileges required.');
             }
 
             setAdmin(adminData);
             return { user: data.user, admin: adminData };
         } catch (error) {
+            console.error('Sign in error:', error);
             throw error;
         }
     };
