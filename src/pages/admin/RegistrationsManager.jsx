@@ -25,20 +25,20 @@ const RegistrationsManager = () => {
 
         setFilteredVolunteers(
             volunteers.filter(volunteer =>
-                volunteer.full_name.toLowerCase().includes(lowerSearch) ||
-                volunteer.email.toLowerCase().includes(lowerSearch) ||
-                volunteer.phone.toLowerCase().includes(lowerSearch) ||
-                volunteer.church.toLowerCase().includes(lowerSearch) ||
-                volunteer.role.toLowerCase().includes(lowerSearch)
+                volunteer.full_name?.toLowerCase().includes(lowerSearch) ||
+                volunteer.email?.toLowerCase().includes(lowerSearch) ||
+                volunteer.phone?.toLowerCase().includes(lowerSearch) ||
+                volunteer.church?.toLowerCase().includes(lowerSearch) ||
+                volunteer.role?.toLowerCase().includes(lowerSearch)
             )
         );
 
         setFilteredParticipants(
             participants.filter(participant =>
-                participant.full_name.toLowerCase().includes(lowerSearch) ||
-                participant.phone.toLowerCase().includes(lowerSearch) ||
-                participant.address.toLowerCase().includes(lowerSearch) ||
-                participant.religion.toLowerCase().includes(lowerSearch)
+                participant.full_name?.toLowerCase().includes(lowerSearch) ||
+                participant.phone?.toLowerCase().includes(lowerSearch) ||
+                participant.address?.toLowerCase().includes(lowerSearch) ||
+                participant.religion?.toLowerCase().includes(lowerSearch)
             )
         );
     }, [searchTerm, volunteers, participants]);
@@ -205,7 +205,18 @@ const RegistrationsManager = () => {
             const collectionName = type === 'volunteer' ? collections.VOLUNTEERS : collections.PARTICIPANTS;
             await firestoreService.delete(collectionName, id);
 
-            fetchData();
+            // Calculate if we need to go to previous page after deletion
+            const items = type === 'volunteer' ? filteredVolunteers : filteredParticipants;
+            const currentItems = getCurrentItems();
+
+            // If we're deleting the last item on the page and it's not the first page
+            if (currentItems.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
+
+            // Fetch fresh data
+            await fetchData();
+
             alert(`${type.charAt(0).toUpperCase() + type.slice(1)} registration deleted successfully`);
         } catch (error) {
             console.error(`Error deleting ${type}:`, error);
@@ -223,6 +234,13 @@ const RegistrationsManager = () => {
 
     const displayItems = getCurrentItems();
     const totalItems = activeTab === 'volunteers' ? filteredVolunteers.length : filteredParticipants.length;
+    const totalPagesCount = totalPages();
+
+    // Check if current page is empty and adjust if needed
+    if (totalPagesCount > 0 && currentPage > totalPagesCount) {
+        // This will trigger automatically on next render
+        setCurrentPage(Math.max(1, totalPagesCount));
+    }
 
     return (
         <div className="space-y-6">
@@ -311,8 +329,29 @@ const RegistrationsManager = () => {
                 </div>
             )}
 
+            {/* No Results Message */}
+            {displayItems.length === 0 && !loading && (
+                <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                    <div className="text-gray-500 text-lg mb-2">
+                        {searchTerm
+                            ? 'No registrations match your search.'
+                            : activeTab === 'volunteers'
+                                ? 'No volunteer registrations found.'
+                                : 'No participant registrations found.'
+                        }
+                    </div>
+                    <p className="text-gray-400 text-sm">
+                        {searchTerm && 'Try clearing your search or'}
+                        {activeTab === 'volunteers'
+                            ? 'Volunteers can register through the public form.'
+                            : 'Participants can register through the public form.'
+                        }
+                    </p>
+                </div>
+            )}
+
             {/* Volunteers Table */}
-            {activeTab === 'volunteers' && (
+            {activeTab === 'volunteers' && displayItems.length > 0 && (
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -345,18 +384,18 @@ const RegistrationsManager = () => {
                             {displayItems.map((volunteer) => (
                                 <tr key={volunteer.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{volunteer.full_name}</div>
+                                        <div className="text-sm font-medium text-gray-900">{volunteer.full_name || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{volunteer.email}</div>
-                                        <div className="text-sm text-gray-500">{volunteer.phone}</div>
+                                        <div className="text-sm text-gray-900">{volunteer.email || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">{volunteer.phone || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {volunteer.church}
+                                        {volunteer.church || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
-                        {volunteer.role}
+                        {volunteer.role || 'Unspecified'}
                       </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -365,15 +404,25 @@ const RegistrationsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(volunteer.createdAt?.toDate() || volunteer.created_at).toLocaleDateString()}
+                                        {volunteer.createdAt?.toDate
+                                            ? new Date(volunteer.createdAt.toDate()).toLocaleDateString()
+                                            : volunteer.created_at
+                                                ? new Date(volunteer.created_at).toLocaleDateString()
+                                                : 'N/A'
+                                        }
                                         <div className="text-xs text-gray-400">
-                                            {new Date(volunteer.createdAt?.toDate() || volunteer.created_at).toLocaleTimeString()}
+                                            {volunteer.createdAt?.toDate
+                                                ? new Date(volunteer.createdAt.toDate()).toLocaleTimeString()
+                                                : volunteer.created_at
+                                                    ? new Date(volunteer.created_at).toLocaleTimeString()
+                                                    : ''
+                                            }
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <button
                                             onClick={() => deleteRegistration('volunteer', volunteer.id)}
-                                            className="text-red-600 hover:text-red-900"
+                                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
                                         >
                                             Delete
                                         </button>
@@ -386,19 +435,11 @@ const RegistrationsManager = () => {
 
                     {/* Pagination */}
                     <PaginationControls />
-
-                    {filteredVolunteers.length === 0 && (
-                        <div className="text-center py-12">
-                            <div className="text-gray-500">
-                                {searchTerm ? 'No volunteer registrations match your search.' : 'No volunteer registrations found.'}
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
 
             {/* Participants Table */}
-            {activeTab === 'participants' && (
+            {activeTab === 'participants' && displayItems.length > 0 && (
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -431,19 +472,19 @@ const RegistrationsManager = () => {
                             {displayItems.map((participant) => (
                                 <tr key={participant.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{participant.full_name}</div>
+                                        <div className="text-sm font-medium text-gray-900">{participant.full_name || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {participant.phone}
+                                        {participant.phone || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 capitalize">{participant.sex}</div>
-                                        <div className="text-sm text-gray-500">Age: {participant.age}</div>
-                                        <div className="text-sm text-gray-500">{participant.religion}</div>
+                                        <div className="text-sm text-gray-900 capitalize">{participant.sex || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">Age: {participant.age || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">{participant.religion || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-sm text-gray-900 max-w-xs">
-                                            {participant.address}
+                                            {participant.address || 'N/A'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -452,15 +493,25 @@ const RegistrationsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(participant.createdAt?.toDate() || participant.created_at).toLocaleDateString()}
+                                        {participant.createdAt?.toDate
+                                            ? new Date(participant.createdAt.toDate()).toLocaleDateString()
+                                            : participant.created_at
+                                                ? new Date(participant.created_at).toLocaleDateString()
+                                                : 'N/A'
+                                        }
                                         <div className="text-xs text-gray-400">
-                                            {new Date(participant.createdAt?.toDate() || participant.created_at).toLocaleTimeString()}
+                                            {participant.createdAt?.toDate
+                                                ? new Date(participant.createdAt.toDate()).toLocaleTimeString()
+                                                : participant.created_at
+                                                    ? new Date(participant.created_at).toLocaleTimeString()
+                                                    : ''
+                                            }
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <button
                                             onClick={() => deleteRegistration('participant', participant.id)}
-                                            className="text-red-600 hover:text-red-900"
+                                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
                                         >
                                             Delete
                                         </button>
@@ -473,14 +524,6 @@ const RegistrationsManager = () => {
 
                     {/* Pagination */}
                     <PaginationControls />
-
-                    {filteredParticipants.length === 0 && (
-                        <div className="text-center py-12">
-                            <div className="text-gray-500">
-                                {searchTerm ? 'No participant registrations match your search.' : 'No participant registrations found.'}
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
         </div>
