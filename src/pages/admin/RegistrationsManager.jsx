@@ -206,7 +206,6 @@ const RegistrationsManager = () => {
             await firestoreService.delete(collectionName, id);
 
             // Calculate if we need to go to previous page after deletion
-            const items = type === 'volunteer' ? filteredVolunteers : filteredParticipants;
             const currentItems = getCurrentItems();
 
             // If we're deleting the last item on the page and it's not the first page
