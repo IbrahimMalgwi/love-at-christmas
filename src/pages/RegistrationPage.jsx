@@ -32,28 +32,7 @@ const RegistrationPage = () => {
                     <ParticipantForm />
                 </div>
 
-                {/* Information Section */}
-                {/*<div className="mt-8 bg-white rounded-lg shadow-md p-6">*/}
-                {/*    <h2 className="text-2xl font-bold text-gray-900 mb-4">About Participant Registration</h2>*/}
-                {/*    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
-                {/*        /!*<div>*!/*/}
-                {/*        /!*    <h3 className="text-lg font-semibold text-gray-800 mb-2">Who Can Register</h3>*!/*/}
-                {/*        /!*    <ul className="list-disc pl-5 text-gray-600 space-y-1">*!/*/}
-                {/*        /!*        <li>Families in need of holiday assistance</li>*!/*/}
-                {/*        /!*        <li>Individuals seeking Christmas support</li>*!/*/}
-                {/*        /!*        <li>Those requiring food, gifts, or other resources</li>*!/*/}
-                {/*        /!*    </ul>*!/*/}
-                {/*        /!*</div>*!/*/}
-                {/*        /!*<div>*!/*/}
-                {/*        /!*    <h3 className="text-lg font-semibold text-gray-800 mb-2">What Happens Next</h3>*!/*/}
-                {/*        /!*    <ul className="list-disc pl-5 text-gray-600 space-y-1">*!/*/}
-                {/*        /!*        <li>Our team will review your application</li>*!/*/}
-                {/*        /!*        <li>You'll receive confirmation within 3-5 business days</li>*!/*/}
-                {/*        /!*        <li>We'll contact you with next steps</li>*!/*/}
-                {/*        /!*    </ul>*!/*/}
-                {/*        /!*</div>*!/*/}
-                {/*    </div>*/}
-                {/*</div>*/}
+
             </div>
         </div>
     );

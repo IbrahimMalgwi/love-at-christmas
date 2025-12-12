@@ -21,6 +21,13 @@ const ParticipantForm = () => {
         { value: 'female', label: 'Female' }
     ];
 
+    const religionOptions = [
+        { value: '', label: 'Select your religion', disabled: true }, // Placeholder
+        { value: 'christianity', label: 'Christianity' },
+        { value: 'islam', label: 'Islam' },
+        { value: 'others', label: 'Others' }
+    ];
+
     const validateForm = () => {
         const newErrors = {};
 
@@ -48,8 +55,8 @@ const ParticipantForm = () => {
             newErrors.age = 'Please enter a valid age';
         }
 
-        if (!formData.religion.trim()) {
-            newErrors.religion = 'Religion is required';
+        if (!formData.religion) {
+            newErrors.religion = 'Please select your religion';
         }
 
         setErrors(newErrors);
@@ -180,15 +187,35 @@ const ParticipantForm = () => {
                 />
             </div>
 
-            <FormInput
-                label="Religion"
-                name="religion"
-                value={formData.religion}
-                onChange={handleChange}
-                error={errors.religion}
-                placeholder="e.g., Christianity, Islam, Traditional, etc."
-                required
-            />
+            {/* Religion Dropdown - Updated to use select instead of text input */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Religion <span className="text-red-500">*</span>
+                </label>
+                <select
+                    name="religion"
+                    value={formData.religion}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
+                        errors.religion ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                >
+                    {religionOptions.map((option) => (
+                        <option
+                            key={option.value}
+                            value={option.value}
+                            disabled={option.disabled || false}
+                            hidden={option.disabled || false}
+                        >
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+                {errors.religion && (
+                    <p className="mt-1 text-sm text-red-500">{errors.religion}</p>
+                )}
+            </div>
 
             <FormInput
                 label="Special Needs (Optional)"
