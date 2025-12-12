@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 import FormInput from '../forms/FormInput';
 
 const ParticipantForm = () => {
@@ -79,14 +79,10 @@ const ParticipantForm = () => {
         setIsSubmitting(true);
 
         try {
-            const { error } = await supabase
-                .from('participants')
-                .insert([{
-                    ...formData,
-                    age: parseInt(formData.age)
-                }]);
-
-            if (error) throw error;
+            await firestoreService.add(collections.PARTICIPANTS, {
+                ...formData,
+                age: parseInt(formData.age)
+            });
 
             setIsSubmitted(true);
             setFormData({

@@ -1,6 +1,5 @@
-//src/pages/admin/FAQManager.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 
 const FAQManager = () => {
     const [faqs, setFaqs] = useState([]);
@@ -27,12 +26,7 @@ const FAQManager = () => {
 
     const fetchFAQs = async () => {
         try {
-            const { data, error } = await supabase
-                .from('faqs')
-                .select('*')
-                .order('order');
-
-            if (error) throw error;
+            const data = await firestoreService.getAll(collections.FAQS);
             setFaqs(data || []);
         } catch (error) {
             console.error('Error fetching FAQs:', error);
@@ -51,18 +45,9 @@ const FAQManager = () => {
             };
 
             if (editingFaq) {
-                const { error } = await supabase
-                    .from('faqs')
-                    .update(faqData)
-                    .eq('id', editingFaq.id);
-
-                if (error) throw error;
+                await firestoreService.update(collections.FAQS, editingFaq.id, faqData);
             } else {
-                const { error } = await supabase
-                    .from('faqs')
-                    .insert([faqData]);
-
-                if (error) throw error;
+                await firestoreService.add(collections.FAQS, faqData);
             }
 
             resetForm();
@@ -90,7 +75,7 @@ const FAQManager = () => {
             question: faq.question,
             answer: faq.answer,
             category: faq.category,
-            order: faq.order.toString()
+            order: faq.order?.toString() || ''
         });
         setShowForm(true);
     };
@@ -99,12 +84,7 @@ const FAQManager = () => {
         if (!window.confirm('Are you sure you want to delete this FAQ?')) return;
 
         try {
-            const { error } = await supabase
-                .from('faqs')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
+            await firestoreService.delete(collections.FAQS, id);
             fetchFAQs();
         } catch (error) {
             console.error('Error deleting FAQ:', error);
@@ -243,7 +223,7 @@ const FAQManager = () => {
                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {faq.order}
+                                    {faq.order || 0}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                     <button

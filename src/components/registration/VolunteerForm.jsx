@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 import FormInput from '../forms/FormInput';
 
 const VolunteerForm = () => {
@@ -79,11 +79,7 @@ const VolunteerForm = () => {
         setIsSubmitting(true);
 
         try {
-            const { error } = await supabase
-                .from('volunteers')
-                .insert([formData]);
-
-            if (error) throw error;
+            await firestoreService.add(collections.VOLUNTEERS, formData);
 
             setIsSubmitted(true);
             setFormData({
@@ -96,11 +92,7 @@ const VolunteerForm = () => {
             });
         } catch (error) {
             console.error('Error submitting form:', error);
-            if (error.code === '23505') {
-                setErrors({ email: 'This email is already registered' });
-            } else {
-                setErrors({ submit: 'Failed to submit form. Please try again.' });
-            }
+            setErrors({ submit: 'Failed to submit form. Please try again.' });
         } finally {
             setIsSubmitting(false);
         }

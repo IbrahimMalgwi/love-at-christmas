@@ -1,3 +1,4 @@
+// src/App.js - CLEANED VERSION
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -28,15 +29,7 @@ function App() {
                                 <main className="flex-grow">
                                     <Routes>
                                         <Route path="/" element={<HomePage />} />
-                                        {/* Make Items Needed page admin-only */}
-                                        <Route
-                                            path="/items"
-                                            element={
-                                                <ProtectedRoute>
-                                                    <ItemsNeededPage />
-                                                </ProtectedRoute>
-                                            }
-                                        />
+                                        <Route path="/items" element={<ItemsNeededPage />} />
                                         <Route path="/donate" element={<DonationPage />} />
                                         <Route path="/register" element={<RegistrationPage />} />
                                         <Route path="/faq" element={<FAQPage />} />

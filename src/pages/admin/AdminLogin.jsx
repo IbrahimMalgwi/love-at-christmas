@@ -1,4 +1,3 @@
-//src/pages/admin/AdminLogin.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -10,7 +9,7 @@ const AdminLogin = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { signIn } = useAuth();
+    const { login } = useAuth(); // Changed from signIn to login to match your AuthContext
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -27,8 +26,15 @@ const AdminLogin = () => {
         setError('');
 
         try {
-            await signIn(formData.email, formData.password);
-            navigate('/admin/dashboard');
+            const result = await login(formData.email, formData.password);
+
+            if (result.isAdmin) {
+                navigate('/admin/dashboard');
+            } else {
+                setError('You do not have admin privileges.');
+                // Optionally logout the user if they're not an admin
+                // await logout();
+            }
         } catch (error) {
             setError(error.message || 'Failed to login. Please check your credentials.');
         } finally {

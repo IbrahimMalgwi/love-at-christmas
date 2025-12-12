@@ -1,6 +1,5 @@
-// src/pages/admin/RegistrationsManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 
 const RegistrationsManager = () => {
     const [activeTab, setActiveTab] = useState('volunteers');
@@ -50,18 +49,18 @@ const RegistrationsManager = () => {
 
     useEffect(() => {
         filterData();
-        setCurrentPage(1); // Reset to first page when search changes
+        setCurrentPage(1);
     }, [filterData]);
 
     const fetchData = async () => {
         try {
             const [volunteersData, participantsData] = await Promise.all([
-                supabase.from('volunteers').select('*').order('created_at', { ascending: false }),
-                supabase.from('participants').select('*').order('created_at', { ascending: false })
+                firestoreService.getAll(collections.VOLUNTEERS),
+                firestoreService.getAll(collections.PARTICIPANTS)
             ]);
 
-            setVolunteers(volunteersData.data || []);
-            setParticipants(participantsData.data || []);
+            setVolunteers(volunteersData || []);
+            setParticipants(participantsData || []);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -203,13 +202,8 @@ const RegistrationsManager = () => {
         if (!window.confirm(`Are you sure you want to delete this ${type} registration?`)) return;
 
         try {
-            const tableName = type === 'volunteer' ? 'volunteers' : 'participants';
-            const { error } = await supabase
-                .from(tableName)
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
+            const collectionName = type === 'volunteer' ? collections.VOLUNTEERS : collections.PARTICIPANTS;
+            await firestoreService.delete(collectionName, id);
 
             fetchData();
             alert(`${type.charAt(0).toUpperCase() + type.slice(1)} registration deleted successfully`);
@@ -371,9 +365,9 @@ const RegistrationsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(volunteer.created_at).toLocaleDateString()}
+                                        {new Date(volunteer.createdAt?.toDate() || volunteer.created_at).toLocaleDateString()}
                                         <div className="text-xs text-gray-400">
-                                            {new Date(volunteer.created_at).toLocaleTimeString()}
+                                            {new Date(volunteer.createdAt?.toDate() || volunteer.created_at).toLocaleTimeString()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -458,9 +452,9 @@ const RegistrationsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(participant.created_at).toLocaleDateString()}
+                                        {new Date(participant.createdAt?.toDate() || participant.created_at).toLocaleDateString()}
                                         <div className="text-xs text-gray-400">
-                                            {new Date(participant.created_at).toLocaleTimeString()}
+                                            {new Date(participant.createdAt?.toDate() || participant.created_at).toLocaleTimeString()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

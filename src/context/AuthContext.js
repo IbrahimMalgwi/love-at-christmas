@@ -1,6 +1,15 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabase';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+    auth,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+} from '../firebase/config';
+import { db } from '../firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+// Development check - logs only show in dev mode
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 const AuthContext = createContext();
 
@@ -17,99 +26,135 @@ export const AuthProvider = ({ children }) => {
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Check if user is admin by checking admin_users table
-    const checkAdminStatus = useCallback(async (user) => {
-        try {
-            const { data, error } = await supabase
-                .from('admin_users')
-                .select('*')
-                .eq('email', user.email)
-                .single();
+    // Check if user is admin
+    const checkAdminStatus = async (userEmail) => {
+        if (!userEmail) return null;
 
-            if (error || !data) {
-                return null;
+        try {
+            const adminUsersRef = collection(db, 'admin_users');
+            const q = query(
+                adminUsersRef,
+                where('email', '==', userEmail.toLowerCase()),
+                where('role', '==', 'admin')
+            );
+
+            const querySnapshot = await getDocs(q);
+            const results = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            if (isDevelopment) {
+                console.log('Admin query results:', results);
             }
 
-            return data;
+            return results.length > 0 ? results[0] : null;
         } catch (error) {
             console.error('Error checking admin status:', error);
             return null;
         }
+    };
+
+    useEffect(() => {
+        // Listen for auth state changes
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                const userData = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    displayName: firebaseUser.displayName
+                };
+
+                if (isDevelopment) {
+                    console.log('Auth state changed:', firebaseUser.email);
+                }
+
+                setUser(userData);
+
+                // Check admin status using email
+                const adminData = await checkAdminStatus(firebaseUser.email);
+
+                if (isDevelopment && adminData) {
+                    console.log('Admin data found:', adminData);
+                }
+
+                setAdmin(adminData);
+            } else {
+                if (isDevelopment) {
+                    console.log('No user, clearing state');
+                }
+                setUser(null);
+                setAdmin(null);
+            }
+            setLoading(false);
+        });
+
+        return unsubscribe;
     }, []);
 
-    const getSession = useCallback(async () => {
+    const login = async (email, password) => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
+            setLoading(true);
 
-            if (currentUser) {
-                const adminData = await checkAdminStatus(currentUser);
-                setAdmin(adminData);
+            if (isDevelopment) {
+                console.log('Login attempt with:', email);
             }
+
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+            const userData = {
+                uid: userCredential.user.uid,
+                email: userCredential.user.email
+            };
+
+            if (isDevelopment) {
+                console.log('Firebase auth successful:', userCredential.user.email);
+            }
+
+            // Check admin status
+            const adminData = await checkAdminStatus(userCredential.user.email);
+
+            setUser(userData);
+            setAdmin(adminData);
+
+            const result = {
+                user: userData,
+                admin: adminData,
+                isAdmin: !!adminData
+            };
+
+            if (isDevelopment) {
+                console.log('Login process complete. Result:', result);
+            }
+
+            return result;
         } catch (error) {
-            console.error('Error getting session:', error);
+            console.error('Login error:', error);
+
+            let errorMessage = 'Login failed. Please try again.';
+            if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid email or password.';
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many failed attempts. Please try again later.';
+            }
+
+            throw new Error(errorMessage);
         } finally {
             setLoading(false);
         }
-    }, [checkAdminStatus]);
-
-    useEffect(() => {
-        // Get initial session
-        getSession();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                const currentUser = session?.user ?? null;
-                setUser(currentUser);
-
-                if (currentUser) {
-                    const adminData = await checkAdminStatus(currentUser);
-                    setAdmin(adminData);
-                } else {
-                    setAdmin(null);
-                }
-
-                setLoading(false);
-            }
-        );
-
-        return () => subscription.unsubscribe();
-    }, [getSession, checkAdminStatus]);
-
-    const signIn = async (email, password) => {
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-
-            if (error) throw error;
-
-            // Check if user is admin
-            const adminData = await checkAdminStatus(data.user);
-            if (!adminData) {
-                await signOut();
-                throw new Error('Access denied. Admin privileges required.');
-            }
-
-            setAdmin(adminData);
-            return { user: data.user, admin: adminData };
-        } catch (error) {
-            throw error;
-        }
     };
 
-    const signOut = async () => {
+    const logout = async () => {
         try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-
+            await signOut(auth);
             setUser(null);
             setAdmin(null);
         } catch (error) {
-            console.error('Error signing out:', error);
+            console.error('Logout error:', error);
             throw error;
         }
     };
@@ -118,10 +163,10 @@ export const AuthProvider = ({ children }) => {
         user,
         admin,
         loading,
-        signIn,
-        signOut,
+        login,
+        logout,
         isAuthenticated: !!user,
-        isAdmin: !!admin,
+        isAdmin: !!admin
     };
 
     return (

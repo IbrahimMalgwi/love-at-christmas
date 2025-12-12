@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 
 const StatsCounter = () => {
     const [stats, setStats] = useState({
@@ -15,31 +15,22 @@ const StatsCounter = () => {
 
     const fetchStats = async () => {
         try {
-            // Fetch total items received
-            const { data: itemsData, error: itemsError } = await supabase
-                .from('items_inventory')
-                .select('quantity_received');
+            // Use Firebase Firestore to fetch data from all three collections
+            const [itemsData, volunteersData, participantsData] = await Promise.all([
+                firestoreService.getAll(collections.ITEMS_INVENTORY),
+                firestoreService.getAll(collections.VOLUNTEERS),
+                firestoreService.getAll(collections.PARTICIPANTS)
+            ]);
 
-            if (!itemsError && itemsData) {
-                const totalItems = itemsData.reduce((sum, item) => sum + (item.quantity_received || 0), 0);
+            // Calculate total items received from Firestore data
+            const totalItems = itemsData.reduce((sum, item) => sum + (item.quantity_received || 0), 0);
 
-                // Fetch volunteer count
-                const { data: volunteersData } = await supabase
-                    .from('volunteers')
-                    .select('id');
-
-                // Fetch participant count
-                const { data: participantsData } = await supabase
-                    .from('participants')
-                    .select('id');
-
-                setStats({
-                    itemsCollected: totalItems,
-                    volunteers: volunteersData?.length || 0,
-                    participants: participantsData?.length || 0,
-                    familiesHelped: Math.floor((participantsData?.length || 0) / 4) // Estimate families helped
-                });
-            }
+            setStats({
+                itemsCollected: totalItems,
+                volunteers: volunteersData?.length || 0,
+                participants: participantsData?.length || 0,
+                familiesHelped: Math.floor((participantsData?.length || 0) / 4) // Estimate families helped
+            });
         } catch (error) {
             console.error('Error fetching stats:', error);
         }

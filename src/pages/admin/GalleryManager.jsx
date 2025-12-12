@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GalleryImageCard from '../../components/gallery/GalleryImageCard';
 import GalleryUploadForm from '../../components/gallery/GalleryUploadForm';
-import { supabase } from '../../services/supabase';
-import FileUploadService from '../../services/fileUploadService';
+import { firestoreService, collections } from '../../services/firestore';
 
 const GalleryManager = () => {
     const [images, setImages] = useState([]);
@@ -17,41 +16,29 @@ const GalleryManager = () => {
 
     const fetchGalleryData = async () => {
         try {
-            console.log('Fetching gallery data...'); // Debug log
+            console.log('Fetching gallery data...');
 
-            const [imagesResponse, categoriesResponse] = await Promise.all([
-                supabase
-                    .from('gallery_images')
-                    .select(`
-                        *,
-                        gallery_categories (
-                            name
-                        )
-                    `)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('gallery_categories')
-                    .select('*')
-                    .order('name')
+            const [imagesData, categoriesData] = await Promise.all([
+                firestoreService.getAll(collections.GALLERY_IMAGES),
+                firestoreService.getAll(collections.GALLERY_CATEGORIES)
             ]);
 
-            if (imagesResponse.error) {
-                console.error('Images fetch error:', imagesResponse.error);
-                throw imagesResponse.error;
-            }
-            if (categoriesResponse.error) {
-                console.error('Categories fetch error:', categoriesResponse.error);
-                throw categoriesResponse.error;
-            }
+            console.log('Categories fetched:', categoriesData);
+            console.log('Images fetched:', imagesData);
 
-            console.log('Categories fetched:', categoriesResponse.data); // Debug log
-            console.log('Images fetched:', imagesResponse.data); // Debug log
+            // Map category names to images
+            const imagesWithCategories = imagesData.map(image => {
+                const category = categoriesData.find(cat => cat.id === image.category_id);
+                return {
+                    ...image,
+                    category_name: category ? category.name : 'Uncategorized'
+                };
+            });
 
-            setImages(imagesResponse.data || []);
-            setCategories(categoriesResponse.data || []);
+            setImages(imagesWithCategories || []);
+            setCategories(categoriesData || []);
         } catch (error) {
             console.error('Error fetching gallery data:', error);
-            // Set empty arrays on error
             setImages([]);
             setCategories([]);
         } finally {
@@ -61,21 +48,16 @@ const GalleryManager = () => {
 
     const handleCreateImage = async (formData) => {
         try {
-            console.log('Creating image with data:', formData); // Debug log
+            console.log('Creating image with data:', formData);
 
-            const { data, error } = await supabase
-                .from('gallery_images')
-                .insert([{
-                    ...formData,
-                    is_active: true
-                }])
-                .select();
+            await firestoreService.add(collections.GALLERY_IMAGES, {
+                ...formData,
+                is_active: true
+            });
 
-            if (error) throw error;
-
-            console.log('Image created successfully:', data); // Debug log
+            console.log('Image created successfully');
             setShowForm(false);
-            fetchGalleryData(); // Refresh the list
+            fetchGalleryData();
         } catch (error) {
             console.error('Error creating image:', error);
             alert('Error creating image: ' + error.message);
@@ -84,19 +66,13 @@ const GalleryManager = () => {
 
     const handleUpdateImage = async (formData) => {
         try {
-            console.log('Updating image with data:', formData); // Debug log
+            console.log('Updating image with data:', formData);
 
-            const { data, error } = await supabase
-                .from('gallery_images')
-                .update(formData)
-                .eq('id', editingImage.id)
-                .select();
+            await firestoreService.update(collections.GALLERY_IMAGES, editingImage.id, formData);
 
-            if (error) throw error;
-
-            console.log('Image updated successfully:', data); // Debug log
+            console.log('Image updated successfully');
             setEditingImage(null);
-            fetchGalleryData(); // Refresh the list
+            fetchGalleryData();
         } catch (error) {
             console.error('Error updating image:', error);
             alert('Error updating image: ' + error.message);
@@ -107,31 +83,7 @@ const GalleryManager = () => {
         if (!window.confirm('Are you sure you want to delete this image?')) return;
 
         try {
-            // First get the image to know the storage path
-            const { data: image, error: fetchError } = await supabase
-                .from('gallery_images')
-                .select('storage_path')
-                .eq('id', imageId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            // Delete from storage if exists
-            if (image.storage_path) {
-                const deleteResult = await FileUploadService.deleteFile(image.storage_path);
-                if (!deleteResult.success) {
-                    console.warn('Failed to delete file from storage:', deleteResult.error);
-                }
-            }
-
-            // Delete from database
-            const { error: deleteError } = await supabase
-                .from('gallery_images')
-                .delete()
-                .eq('id', imageId);
-
-            if (deleteError) throw deleteError;
-
+            await firestoreService.delete(collections.GALLERY_IMAGES, imageId);
             fetchGalleryData();
             alert('Image deleted successfully');
         } catch (error) {
@@ -194,10 +146,7 @@ const GalleryManager = () => {
                 {images.map(image => (
                     <GalleryImageCard
                         key={image.id}
-                        image={{
-                            ...image,
-                            category_name: image.gallery_categories?.name || 'Uncategorized'
-                        }}
+                        image={image}
                         onEdit={setEditingImage}
                         onDelete={handleDeleteImage}
                         isAdmin={true}

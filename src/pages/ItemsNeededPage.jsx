@@ -1,6 +1,5 @@
-// src/pages/ItemsNeededPage.jsx
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
-import { supabase } from '../services/supabase';
+import React, { useState, useEffect, useCallback } from 'react';
+import { firestoreService, collections } from '../services/firestore';
 import CategoryFilter from '../components/items/CategoryFilter';
 import ItemCard from '../components/items/ItemCard';
 import ProgressBar from '../components/items/ProgressBar';
@@ -28,7 +27,6 @@ const ItemsNeededPage = () => {
         fetchItems();
     }, []);
 
-    // Move filterItems inside useCallback to stabilize the function
     const filterItems = useCallback(() => {
         let filtered = items;
 
@@ -44,22 +42,15 @@ const ItemsNeededPage = () => {
         }
 
         setFilteredItems(filtered);
-    }, [items, selectedCategory, searchTerm]); // Add dependencies
+    }, [items, selectedCategory, searchTerm]);
 
-    // Now include filterItems in the dependency array
     useEffect(() => {
         filterItems();
-    }, [filterItems]); // Add filterItems as dependency
+    }, [filterItems]);
 
     const fetchItems = async () => {
         try {
-            const { data, error } = await supabase
-                .from('items_inventory')
-                .select('*')
-                .order('category')
-                .order('item_name');
-
-            if (error) throw error;
+            const data = await firestoreService.getAll(collections.ITEMS_INVENTORY);
             setItems(data || []);
         } catch (error) {
             console.error('Error fetching items:', error);
@@ -67,8 +58,6 @@ const ItemsNeededPage = () => {
             setLoading(false);
         }
     };
-
-    // Remove the old filterItems function from here
 
     const calculateTotals = () => {
         const totalNeeded = items.reduce((sum, item) => sum + (item.quantity_needed || 0), 0);

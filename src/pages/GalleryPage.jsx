@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GalleryImageCard from '../components/gallery/GalleryImageCard';
 import GalleryFilter from '../components/gallery/GalleryFilter';
-import { supabase } from '../services/supabase';
+import { firestoreService, collections } from '../services/firestore';
 
 const GalleryPage = () => {
     const [images, setImages] = useState([]);
@@ -16,29 +16,25 @@ const GalleryPage = () => {
 
     const fetchGalleryData = async () => {
         try {
-            const [imagesResponse, categoriesResponse] = await Promise.all([
-                supabase
-                    .from('gallery_images')
-                    .select(`
-            *,
-            gallery_categories (
-              name
-            )
-          `)
-                    .eq('is_active', true)
-                    .order('created_at', { ascending: false }),
-                supabase
-                    .from('gallery_categories')
-                    .select('*')
-                    .order('name')
-            ]);
+            // Fetch images with category data
+            const imagesData = await firestoreService.getAll(collections.GALLERY_IMAGES);
 
-            if (imagesResponse.error) throw imagesResponse.error;
-            if (categoriesResponse.error) throw categoriesResponse.error;
+            // Fetch categories
+            const categoriesData = await firestoreService.getAll(collections.GALLERY_CATEGORIES);
 
-            console.log('Fetched images:', imagesResponse.data); // Debug log
-            setImages(imagesResponse.data || []);
-            setCategories(categoriesResponse.data || []);
+            // Map category names to images
+            const imagesWithCategories = imagesData.map(image => {
+                const category = categoriesData.find(cat => cat.id === image.category_id);
+                return {
+                    ...image,
+                    category_name: category ? category.name : 'Uncategorized',
+                    // For Firebase, we might need to map timestamps
+                    created_at: image.createdAt || image.created_at
+                };
+            });
+
+            setImages(imagesWithCategories || []);
+            setCategories(categoriesData || []);
         } catch (error) {
             console.error('Error fetching gallery data:', error);
             setImages([]);
@@ -83,11 +79,7 @@ const GalleryPage = () => {
                     {filteredImages.map(image => (
                         <GalleryImageCard
                             key={image.id}
-                            image={{
-                                ...image,
-                                // Ensure category name is accessible
-                                category_name: image.gallery_categories?.name || 'Uncategorized'
-                            }}
+                            image={image}
                         />
                     ))}
                 </div>

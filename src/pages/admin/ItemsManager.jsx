@@ -1,6 +1,5 @@
-// src/pages/admin/ItemsManager.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
+import { firestoreService, collections } from '../../services/firestore';
 
 const ItemsManager = () => {
     const [items, setItems] = useState([]);
@@ -39,13 +38,7 @@ const ItemsManager = () => {
 
     const fetchItems = async () => {
         try {
-            const { data, error } = await supabase
-                .from('items_inventory')
-                .select('*')
-                .order('category')
-                .order('item_name');
-
-            if (error) throw error;
+            const data = await firestoreService.getAll(collections.ITEMS_INVENTORY);
             setItems(data || []);
         } catch (error) {
             console.error('Error fetching items:', error);
@@ -163,23 +156,13 @@ const ItemsManager = () => {
                 ...formData,
                 quantity_needed: parseFloat(formData.quantity_needed),
                 quantity_received: parseFloat(formData.quantity_received),
-                unit_price: parseFloat(formData.unit_price),
-                updated_at: new Date().toISOString()
+                unit_price: parseFloat(formData.unit_price)
             };
 
             if (editingItem) {
-                const { error } = await supabase
-                    .from('items_inventory')
-                    .update(itemData)
-                    .eq('id', editingItem.id);
-
-                if (error) throw error;
+                await firestoreService.update(collections.ITEMS_INVENTORY, editingItem.id, itemData);
             } else {
-                const { error } = await supabase
-                    .from('items_inventory')
-                    .insert([itemData]);
-
-                if (error) throw error;
+                await firestoreService.add(collections.ITEMS_INVENTORY, itemData);
             }
 
             resetForm();
@@ -222,12 +205,7 @@ const ItemsManager = () => {
         if (!window.confirm('Are you sure you want to delete this item?')) return;
 
         try {
-            const { error } = await supabase
-                .from('items_inventory')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
+            await firestoreService.delete(collections.ITEMS_INVENTORY, id);
             fetchItems();
         } catch (error) {
             console.error('Error deleting item:', error);
@@ -237,15 +215,9 @@ const ItemsManager = () => {
 
     const updateQuantity = async (id, field, value) => {
         try {
-            const { error } = await supabase
-                .from('items_inventory')
-                .update({
-                    [field]: value,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', id);
-
-            if (error) throw error;
+            await firestoreService.update(collections.ITEMS_INVENTORY, id, {
+                [field]: value
+            });
             fetchItems();
         } catch (error) {
             console.error('Error updating quantity:', error);
@@ -269,15 +241,12 @@ const ItemsManager = () => {
         }
 
         try {
-            const { error } = await supabase
-                .from('items_inventory')
-                .update({
-                    quantity_received: quantity,
-                    updated_at: new Date().toISOString()
-                })
-                .in('id', selectedItems);
-
-            if (error) throw error;
+            // Update each item individually since Firebase doesn't support bulk updates in the client SDK
+            for (const itemId of selectedItems) {
+                await firestoreService.update(collections.ITEMS_INVENTORY, itemId, {
+                    quantity_received: quantity
+                });
+            }
 
             setSelectedItems([]);
             fetchItems();
@@ -301,10 +270,8 @@ const ItemsManager = () => {
         const allSelected = currentItems.every(item => selectedItems.includes(item.id));
 
         if (allSelected) {
-            // Deselect all on current page
             setSelectedItems(prev => prev.filter(id => !currentItems.some(item => item.id === id)));
         } else {
-            // Select all on current page
             const newSelected = [...new Set([...selectedItems, ...currentItems.map(item => item.id)])];
             setSelectedItems(newSelected);
         }
@@ -531,8 +498,10 @@ const ItemsManager = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                         {currentItems.map((item) => {
-                            const amount = item.quantity_needed * item.unit_price;
-                            const progress = (item.quantity_received / item.quantity_needed) * 100;
+                            const amount = (item.quantity_needed || 0) * (item.unit_price || 0);
+                            const progress = (item.quantity_needed || 0) > 0
+                                ? ((item.quantity_received || 0) / (item.quantity_needed || 1)) * 100
+                                : 0;
 
                             return (
                                 <tr key={item.id} className="hover:bg-gray-50">
@@ -551,7 +520,7 @@ const ItemsManager = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 capitalize">
-                                            {item.category.replace('_', ' ')}
+                                            {item.category?.replace('_', ' ') || 'Uncategorized'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -560,13 +529,13 @@ const ItemsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {item.quantity_needed}
+                                        {item.quantity_needed || 0}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <input
                                             type="number"
                                             step="0.01"
-                                            value={item.quantity_received}
+                                            value={item.quantity_received || 0}
                                             onChange={(e) => updateQuantity(item.id, 'quantity_received', parseFloat(e.target.value) || 0)}
                                             className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
                                             min="0"
@@ -582,7 +551,7 @@ const ItemsManager = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ₦{item.unit_price?.toLocaleString()}
+                                        ₦{item.unit_price?.toLocaleString() || 0}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                                         ₦{amount.toLocaleString()}

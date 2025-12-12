@@ -60,7 +60,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, existingFile = null }) => 
         // Start upload
         setIsUploading(true);
 
-        // Simulate progress (Supabase doesn't provide progress events yet)
+        // Simulate progress
         const progressInterval = setInterval(() => {
             setUploadProgress(prev => {
                 if (prev >= 90) {
@@ -83,7 +83,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, existingFile = null }) => 
                     file_name: result.fileName,
                     file_size: result.fileSize,
                     mime_type: result.mimeType,
-                    storage_path: result.filePath
+                    storage_path: result.storagePath
                 });
             } else {
                 setErrors([result.error]);

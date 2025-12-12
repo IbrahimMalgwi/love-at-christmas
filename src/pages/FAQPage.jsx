@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import React, { useState, useEffect, useCallback } from 'react';
+import { firestoreService, collections } from '../services/firestore';
 import FAQAccordion from '../components/faq/FAQAccordion';
 import FAQSearch from '../components/faq/FAQSearch';
 
@@ -22,27 +22,7 @@ const FAQPage = () => {
         fetchFAQs();
     }, []);
 
-    useEffect(() => {
-        filterFAQs();
-    }, [faqs, searchTerm, selectedCategory]);
-
-    const fetchFAQs = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('faqs')
-                .select('*')
-                .order('order');
-
-            if (error) throw error;
-            setFaqs(data || []);
-        } catch (error) {
-            console.error('Error fetching FAQs:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filterFAQs = () => {
+    const filterFAQs = useCallback(() => {
         let filtered = faqs;
 
         if (selectedCategory !== 'all') {
@@ -57,20 +37,21 @@ const FAQPage = () => {
         }
 
         setFilteredFaqs(filtered);
-    };
+    }, [faqs, searchTerm, selectedCategory]);
 
-    const getFAQsByCategory = () => {
-        if (selectedCategory !== 'all') {
-            return { [selectedCategory]: filteredFaqs };
+    useEffect(() => {
+        filterFAQs();
+    }, [filterFAQs]);
+
+    const fetchFAQs = async () => {
+        try {
+            const data = await firestoreService.getAll(collections.FAQS);
+            setFaqs(data || []);
+        } catch (error) {
+            console.error('Error fetching FAQs:', error);
+        } finally {
+            setLoading(false);
         }
-
-        const categorized = {};
-        categories.forEach(cat => {
-            if (cat.value !== 'all') {
-                categorized[cat.value] = faqs.filter(faq => faq.category === cat.value);
-            }
-        });
-        return categorized;
     };
 
     if (loading) {

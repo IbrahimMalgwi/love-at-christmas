@@ -1,24 +1,27 @@
+// src/pages/admin/AdminDashboard.jsx - CLEANED
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ItemsManager from './ItemsManager';
 import RegistrationsManager from './RegistrationsManager';
 import FAQManager from './FAQManager';
-import GalleryManager from './GalleryManager'; // Add this import
+import GalleryManager from './GalleryManager';
+import CSVUploadPage from './CSVUploadPage';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('items');
-    const { admin, signOut } = useAuth();
+    const { admin, logout } = useAuth();
 
     const tabs = [
         { id: 'items', name: 'Items Management', icon: '📦' },
         { id: 'registrations', name: 'Registrations', icon: '👥' },
         { id: 'faqs', name: 'FAQs', icon: '❓' },
-        { id: 'gallery', name: 'Gallery', icon: '🖼️' } // Add this tab
+        { id: 'gallery', name: 'Gallery', icon: '🖼️' },
+        { id: 'csv-upload', name: 'CSV Upload', icon: '📄' }
     ];
 
     const handleLogout = async () => {
         try {
-            await signOut();
+            await logout();
         } catch (error) {
             console.error('Error logging out:', error);
         }
@@ -34,6 +37,8 @@ const AdminDashboard = () => {
                 return <FAQManager />;
             case 'gallery':
                 return <GalleryManager />;
+            case 'csv-upload':
+                return <CSVUploadPage />;
             default:
                 return <ItemsManager />;
         }
@@ -53,8 +58,8 @@ const AdminDashboard = () => {
                         </div>
                         <div className="flex items-center space-x-4">
                             <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">{admin?.full_name}</p>
-                                <p className="text-sm text-gray-500">{admin?.email}</p>
+                                <p className="text-sm font-medium text-gray-900">{admin?.full_name || admin?.email}</p>
+                                <p className="text-sm text-gray-500">Administrator</p>
                             </div>
                             <button
                                 onClick={handleLogout}

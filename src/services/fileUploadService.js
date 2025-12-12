@@ -1,129 +1,67 @@
-import { supabase } from './supabase';
+// src/services/fileUploadService.js
+import { storage } from '../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-class FileUploadService {
-    // Valid file types for images
-    static validMimeTypes = [
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
-        'image/webp'
-    ];
+export const FileUploadService = {
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    validMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
 
-    // Maximum file size (5MB)
-    static maxFileSize = 5 * 1024 * 1024;
-
-    // Validate file before upload
-    static validateFile(file) {
+    validateFile: (file) => {
         const errors = [];
 
-        // Check file type
-        if (!this.validMimeTypes.includes(file.type)) {
-            errors.push(`Invalid file type. Allowed types: ${this.validMimeTypes.join(', ')}`);
+        // Check file size
+        if (file.size > FileUploadService.maxFileSize) {
+            errors.push(`File size exceeds ${FileUploadService.maxFileSize / 1024 / 1024}MB limit`);
         }
 
-        // Check file size
-        if (file.size > this.maxFileSize) {
-            errors.push(`File too large. Maximum size: ${this.maxFileSize / 1024 / 1024}MB`);
+        // Check file type
+        if (!FileUploadService.validMimeTypes.includes(file.type)) {
+            errors.push('Invalid file type. Please upload an image (JPEG, PNG, GIF, WebP)');
         }
 
         return {
             isValid: errors.length === 0,
             errors
         };
-    }
+    },
 
-    // Generate unique file name
-    static generateFileName(file, prefix = 'image') {
-        const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(2, 15);
-        const fileExtension = file.name.split('.').pop();
-        return `${prefix}_${timestamp}_${randomString}.${fileExtension}`;
-    }
-
-    // Upload file to Supabase Storage
-    static async uploadFile(file, folder = 'gallery') {
+    uploadFile: async (file) => {
         try {
-            // Validate file
-            const validation = this.validateFile(file);
+            const validation = FileUploadService.validateFile(file);
             if (!validation.isValid) {
-                throw new Error(validation.errors.join(', '));
+                return {
+                    success: false,
+                    error: validation.errors.join(', ')
+                };
             }
 
             // Generate unique file name
-            const fileName = this.generateFileName(file);
-            const filePath = `${folder}/${fileName}`;
+            const timestamp = Date.now();
+            const fileName = `${timestamp}_${file.name.replace(/\s+/g, '_')}`;
+            const storageRef = ref(storage, `gallery/${fileName}`);
 
-            // Upload file - remove unused 'data' variable
-            const { error } = await supabase.storage
-                .from('gallery')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            // Upload file
+            await uploadBytes(storageRef, file);
 
-            if (error) throw error;
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('gallery')
-                .getPublicUrl(filePath);
+            // Get download URL
+            const downloadURL = await getDownloadURL(storageRef);
 
             return {
                 success: true,
-                fileName,
-                filePath,
-                publicUrl,
+                fileName: fileName,
                 fileSize: file.size,
-                mimeType: file.type
+                mimeType: file.type,
+                storagePath: `gallery/${fileName}`,
+                publicUrl: downloadURL
             };
-
         } catch (error) {
             console.error('Upload error:', error);
             return {
                 success: false,
-                error: error.message
+                error: error.message || 'Failed to upload file'
             };
         }
     }
-
-    // Delete file from Supabase Storage
-    static async deleteFile(filePath) {
-        try {
-            const { error } = await supabase.storage
-                .from('gallery')
-                .remove([filePath]);
-
-            if (error) throw error;
-
-            return { success: true };
-        } catch (error) {
-            console.error('Delete error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    // Update file (delete old and upload new)
-    static async updateFile(newFile, oldFilePath, folder = 'gallery') {
-        try {
-            // Delete old file if exists
-            if (oldFilePath) {
-                await this.deleteFile(oldFilePath);
-            }
-
-            // Upload new file
-            return await this.uploadFile(newFile, folder);
-        } catch (error) {
-            console.error('Update error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-}
+};
 
 export default FileUploadService;
