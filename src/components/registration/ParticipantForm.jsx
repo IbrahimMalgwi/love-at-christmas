@@ -22,7 +22,7 @@ const ParticipantForm = () => {
     ];
 
     const religionOptions = [
-        { value: '', label: 'Select your religion', disabled: true }, // Placeholder
+        { value: '', label: 'Select your religion', disabled: true },
         { value: 'christianity', label: 'Christianity' },
         { value: 'islam', label: 'Islam' },
         { value: 'others', label: 'Others' }
@@ -92,21 +92,26 @@ const ParticipantForm = () => {
             });
 
             setIsSubmitted(true);
-            setFormData({
-                full_name: '',
-                phone: '',
-                address: '',
-                sex: '',
-                age: '',
-                religion: '',
-                special_needs: ''
-            });
         } catch (error) {
             console.error('Error submitting form:', error);
             setErrors({ submit: 'Failed to submit form. Please try again.' });
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleRegisterAnother = () => {
+        setIsSubmitted(false);
+        setFormData({
+            full_name: '',
+            phone: '',
+            address: '',
+            sex: '',
+            age: '',
+            religion: '',
+            special_needs: ''
+        });
+        setErrors({});
     };
 
     if (isSubmitted) {
@@ -117,16 +122,44 @@ const ParticipantForm = () => {
                 <p className="text-gray-600 mb-4">
                     Thank you for registering as a participant in Love at Christmas.
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 mb-8">
                     We'll contact you with details about the event and how to receive your Christmas package.
                 </p>
+
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <button
+                        onClick={handleRegisterAnother}
+                        className="bg-red-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                    >
+                        Register Another Participant
+                    </button>
+                    <a
+                        href="/"
+                        className="bg-gray-200 text-gray-800 py-3 px-8 rounded-lg font-semibold hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    >
+                        Return to Home
+                    </a>
+                </div>
+
+                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                    <p className="text-blue-800 text-sm">
+                        <strong>Note:</strong> You can register multiple family members or friends using the "Register Another Participant" button.
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Participant Registration</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Participant Registration</h2>
+                {isSubmitted === false && (
+                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        New Registration
+                    </span>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
@@ -187,7 +220,7 @@ const ParticipantForm = () => {
                 />
             </div>
 
-            {/* Religion Dropdown - Updated to use select instead of text input */}
+            {/* Religion Dropdown */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Religion <span className="text-red-500">*</span>
@@ -236,7 +269,7 @@ const ParticipantForm = () => {
                 disabled={isSubmitting}
                 className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-                {isSubmitting ? 'Submitting...' : 'Register as Participant'}
+                {isSubmitting ? 'Submitting...' : 'Register Participant'}
             </button>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
