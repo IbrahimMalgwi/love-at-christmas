@@ -1,18 +1,22 @@
 // src/pages/admin/AdminDashboard.jsx - CLEANED
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import CampaignManager from './CampaignManager';
 import ItemsManager from './ItemsManager';
 import RegistrationsManager from './RegistrationsManager';
 import FAQManager from './FAQManager';
 import GalleryManager from './GalleryManager';
 import CSVUploadPage from './CSVUploadPage';
+import ItemsReceivedPage from './ItemsReceivedPage';
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('items');
-    const { admin, logout } = useAuth();
+    const [activeTab, setActiveTab] = useState('campaign');
+    const { user, logout } = useAuth();
 
     const tabs = [
+        { id: 'campaign', name: 'Campaign' },
         { id: 'items', name: 'Items Management', icon: '📦' },
+        { id: 'items-received', name: 'Items Received', icon: '📋' },
         { id: 'registrations', name: 'Registrations', icon: '👥' },
         { id: 'faqs', name: 'FAQs', icon: '❓' },
         { id: 'gallery', name: 'Gallery', icon: '🖼️' },
@@ -29,8 +33,12 @@ const AdminDashboard = () => {
 
     const renderActiveTab = () => {
         switch (activeTab) {
+            case 'campaign':
+                return <CampaignManager />;
             case 'items':
                 return <ItemsManager />;
+            case 'items-received':
+                return <ItemsReceivedPage />;
             case 'registrations':
                 return <RegistrationsManager />;
             case 'faqs':
@@ -58,7 +66,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="flex items-center space-x-4">
                             <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">{admin?.full_name || admin?.email}</p>
+                                <p className="text-sm font-medium text-gray-900">{user?.displayName || user?.email}</p>
                                 <p className="text-sm text-gray-500">Administrator</p>
                             </div>
                             <button
@@ -75,10 +83,11 @@ const AdminDashboard = () => {
             {/* Tabs */}
             <div className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <nav className="-mb-px flex space-x-8">
+                    <nav className="-mb-px flex flex-wrap gap-x-6" aria-label="Dashboard sections">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
+                                aria-pressed={activeTab === tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
                                     activeTab === tab.id
@@ -95,9 +104,9 @@ const AdminDashboard = () => {
             </div>
 
             {/* Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <section aria-label="Dashboard content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {renderActiveTab()}
-            </main>
+            </section>
         </div>
     );
 };

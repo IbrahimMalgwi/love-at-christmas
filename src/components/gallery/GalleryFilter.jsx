@@ -8,6 +8,7 @@ const GalleryFilter = ({ categories, selectedCategory, onCategoryChange, onSearc
                     <input
                         type="text"
                         placeholder="Search images..."
+                        aria-label="Search photos"
                         onChange={(e) => onSearch(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -15,6 +16,7 @@ const GalleryFilter = ({ categories, selectedCategory, onCategoryChange, onSearc
                 <div className="w-full md:w-48">
                     <select
                         value={selectedCategory}
+                        aria-label="Photo category"
                         onChange={(e) => onCategoryChange(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >

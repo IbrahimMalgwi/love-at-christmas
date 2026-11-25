@@ -19,14 +19,14 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <div className="min-h-screen bg-gray-50 flex flex-col">
+                <div className="min-h-screen flex flex-col">
                     {/* Don't show navbar on admin login page */}
                     <Routes>
                         <Route path="/admin/login" element={<AdminLogin />} />
                         <Route path="*" element={
                             <>
                                 <Navbar />
-                                <main className="flex-grow">
+                                <main className="flex-grow site-main" id="main-content" tabIndex={-1}>
                                     <Routes>
                                         <Route path="/" element={<HomePage />} />
                                         <Route path="/items" element={<ItemsNeededPage />} />
@@ -37,7 +37,7 @@ function App() {
                                         <Route
                                             path="/admin/dashboard"
                                             element={
-                                                <ProtectedRoute>
+                                                <ProtectedRoute requireAdmin>
                                                     <AdminDashboard />
                                                 </ProtectedRoute>
                                             }
@@ -45,7 +45,7 @@ function App() {
                                         <Route
                                             path="/admin/gallery"
                                             element={
-                                                <ProtectedRoute>
+                                                <ProtectedRoute requireAdmin>
                                                     <GalleryManager />
                                                 </ProtectedRoute>
                                             }

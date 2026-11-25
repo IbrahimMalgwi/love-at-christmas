@@ -1,6 +1,6 @@
 // src/services/fileUploadService.js
 import { storage } from '../firebase/config';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 export const FileUploadService = {
     maxFileSize: 5 * 1024 * 1024, // 5MB
@@ -25,6 +25,28 @@ export const FileUploadService = {
         };
     },
 
+    deleteFile: async (path, url) => {
+        let fileRef;
+        if (path) {
+            fileRef = ref(storage, path);
+        } else if (url) {
+            try {
+                fileRef = ref(storage, url);
+            } catch {
+                return;
+            }
+        }
+        if (!fileRef || fileRef.bucket !== ref(storage).bucket || !/^gallery\/[^/]+$/.test(fileRef.fullPath)) {
+            if (path) throw new Error('Invalid gallery storage path.');
+            return;
+        }
+        try {
+            await deleteObject(fileRef);
+        } catch (error) {
+            if (error.code !== 'storage/object-not-found') throw error;
+        }
+    },
+
     uploadFile: async (file) => {
         try {
             const validation = FileUploadService.validateFile(file);
@@ -36,8 +58,7 @@ export const FileUploadService = {
             }
 
             // Generate unique file name
-            const timestamp = Date.now();
-            const fileName = `${timestamp}_${file.name.replace(/\s+/g, '_')}`;
+            const fileName = `${crypto.randomUUID()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
             const storageRef = ref(storage, `gallery/${fileName}`);
 
             // Upload file

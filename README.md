@@ -68,3 +68,61 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Firebase access and public counts
+
+For local development, copy `.env.example` to `.env.local`, fill in the
+Firebase web app configuration, and restart `npm start`. Set the same values
+in the production build environment. Without this configuration, static pages
+still load, while live data and admin sign-in are unavailable. Keep service
+account credentials out of the browser and repository.
+
+Before rolling out the app and deploying `firestore.rules` and `storage.rules`,
+use Application Default Credentials with permission to manage Firebase Auth
+and access Firestore. Grant the admin claim to each existing administrator's
+Firebase Auth UID after verifying it. Admins need to sign in again to refresh
+their tokens.
+
+```sh
+node scripts/firebase-maintenance.cjs grant-admin PROJECT_ID ADMIN_UID
+firebase deploy --only firestore:rules,storage --project PROJECT_ID
+```
+
+### Publishing campaign content
+
+Open **Admin Dashboard → Campaign** to edit dates, the announcement, volunteer
+registration, an approved gallery photo for the homepage, and verified impact.
+Save a draft to work privately. **Publish campaign** replaces the public snapshot
+that visitors see without a Vercel rebuild. Blank figures are unavailable. An
+explicit zero is displayed as zero. The old public stats document may remain for
+older clients, but this frontend uses the curated figures in the campaign snapshot.
+
+FAQ edits can also be saved privately and published later. Existing FAQ and gallery
+records remain in their original collections. Saving a gallery item publishes it;
+use only images approved for public display. The 2025 flyer from the existing public
+gallery is bundled as an archive item. The hero uses a festive illustration until
+an approved gallery photo is selected. No additional Firestore indexes are required.
+
+Deploy the updated Firestore and Storage rules before using the new dashboard.
+Volunteer submissions require a published campaign with registration turned on.
+Participant registration stays available under the existing validation rules.
+The Firebase environment variables in `.env.example` are required on Vercel for
+live data. The live gallery served its flyer from Supabase Storage even though the live
+bundle also contained Firebase Auth and Firestore. Confirm the Firebase project
+used by Vercel and review any production-only records held separately before
+rolling out the redesign.
+
+### Local Firebase preview
+
+Run the Firebase Auth, Firestore and Storage emulators with a demo project:
+
+```sh
+firebase emulators:start --project demo-love-at-christmas --only auth,firestore,storage
+REACT_APP_USE_FIREBASE_EMULATORS=true \
+REACT_APP_FIREBASE_API_KEY=demo-key \
+REACT_APP_FIREBASE_PROJECT_ID=demo-love-at-christmas \
+REACT_APP_FIREBASE_STORAGE_BUCKET=demo-love-at-christmas.appspot.com npm start
+```
+
+The emulator switch requires a development build and a project ID beginning with
+`demo-`. Use an Auth emulator account with the `admin` custom claim to test publishing.

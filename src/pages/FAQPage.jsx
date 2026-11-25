@@ -1,158 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { firestoreService, collections } from '../services/firestore';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import FAQAccordion from '../components/faq/FAQAccordion';
-import FAQSearch from '../components/faq/FAQSearch';
+import ReadError from '../components/common/ReadError';
+import { firestoreService, collections } from '../services/firestore';
 
-const FAQPage = () => {
-    const [faqs, setFaqs] = useState([]);
-    const [filteredFaqs, setFilteredFaqs] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [loading, setLoading] = useState(true);
+const categories = [['general', 'General'], ['donations', 'Donations'], ['volunteering', 'Volunteering'], ['participation', 'Participation']];
 
-    const categories = [
-        { value: 'all', label: 'All Categories' },
-        { value: 'general', label: 'General' },
-        { value: 'donations', label: 'Donations' },
-        { value: 'volunteering', label: 'Volunteering' },
-        { value: 'participation', label: 'Participation' }
-    ];
-
-    useEffect(() => {
-        fetchFAQs();
-    }, []);
-
-    const filterFAQs = useCallback(() => {
-        let filtered = faqs;
-
-        if (selectedCategory !== 'all') {
-            filtered = filtered.filter(faq => faq.category === selectedCategory);
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter(faq =>
-                faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        setFilteredFaqs(filtered);
-    }, [faqs, searchTerm, selectedCategory]);
-
-    useEffect(() => {
-        filterFAQs();
-    }, [filterFAQs]);
-
-    const fetchFAQs = async () => {
+export default function FAQPage() {
+    const [state, setState] = useState({ loading: true, faqs: [] });
+    const [query, setQuery] = useState('');
+    const [category, setCategory] = useState('');
+    const load = useCallback(async () => {
+        setState({ loading: true, faqs: [] });
         try {
-            const data = await firestoreService.getAll(collections.FAQS);
-            setFaqs(data || []);
-        } catch (error) {
-            console.error('Error fetching FAQs:', error);
-        } finally {
-            setLoading(false);
+            const faqs = await firestoreService.getAll(collections.FAQS);
+            setState({ faqs: faqs.sort((first, second) => (first.order || 0) - (second.order || 0)) });
+        } catch {
+            setState({ error: true, faqs: [] });
         }
-    };
+    }, []);
+    useEffect(() => { load(); }, [load]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">Loading FAQs...</div>
-                </div>
+    const filtered = state.faqs.filter(faq => (!category || category === faq.category) &&
+        [faq.question, faq.answer].some(value => (value || '').toLowerCase().includes(query.trim().toLowerCase())));
+
+    return <div className="site-wrap section-spacing faq-layout">
+        <header className="page-heading"><p className="eyebrow">Need help?</p><h1>Frequently asked questions</h1><p>Find answers about donating, registering and volunteering.</p></header>
+        <div>
+            <div className="filter-row">
+                <label>Search questions<input type="search" value={query} onChange={event => setQuery(event.target.value)} /></label>
+                <label>Category<select value={category} onChange={event => setCategory(event.target.value)}>
+                    <option value="">All categories</option>{categories.map(([key, label]) => <option value={key} key={key}>{label}</option>)}
+                </select></label>
             </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-                    <p className="text-xl text-gray-600">
-                        Find answers to common questions about Love at Christmas
-                    </p>
-                </div>
-
-                {/* Search and Filter */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <FAQSearch
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        categories={categories}
-                        selectedCategory={selectedCategory}
-                        onCategoryChange={setSelectedCategory}
-                    />
-                </div>
-
-                {/* FAQs */}
-                <div className="space-y-8">
-                    {selectedCategory === 'all' ? (
-                        categories
-                            .filter(cat => cat.value !== 'all')
-                            .map(category => {
-                                const categoryFaqs = faqs.filter(faq => faq.category === category.value);
-                                if (categoryFaqs.length === 0) return null;
-
-                                return (
-                                    <div key={category.value} className="bg-white rounded-lg shadow-md overflow-hidden">
-                                        <div className="bg-red-600 px-6 py-4">
-                                            <h2 className="text-xl font-bold text-white">{category.label}</h2>
-                                        </div>
-                                        <div className="p-6">
-                                            <FAQAccordion faqs={categoryFaqs} />
-                                        </div>
-                                    </div>
-                                );
-                            })
-                    ) : (
-                        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                            <div className="bg-red-600 px-6 py-4">
-                                <h2 className="text-xl font-bold text-white">
-                                    {categories.find(cat => cat.value === selectedCategory)?.label}
-                                </h2>
-                            </div>
-                            <div className="p-6">
-                                <FAQAccordion faqs={filteredFaqs} />
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {filteredFaqs.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-gray-500 text-lg mb-4">No FAQs found matching your criteria.</div>
-                        <p className="text-gray-600">
-                            Please try different search terms or browse all categories.
-                        </p>
-                    </div>
-                )}
-
-                {/* Contact Section */}
-                <div className="mt-12 bg-white rounded-lg shadow-md p-8 text-center">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Still Have Questions?</h2>
-                    <p className="text-gray-600 mb-6">
-                        We're here to help! Contact us directly and we'll get back to you as soon as possible.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <a
-                            href="tel:+2348000000000"
-                            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-                        >
-                            📞 Call Us
-                        </a>
-                        <a
-                            href="mailto:info@loveatchristmas.org"
-                            className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                        >
-                            ✉️ Email Us
-                        </a>
-                    </div>
-                </div>
-            </div>
+            {state.loading ? <p role="status">Loading questions…</p> : state.error ? <ReadError onRetry={load} /> :
+                filtered.length ? <FAQAccordion faqs={filtered} /> : <p role="status">{state.faqs.length ? 'No questions match your filters.' : 'No questions have been published yet.'}</p>}
+            <p className="faq-contact">Still have a question? <a className="text-link" href="mailto:foursquaresabo@yahoo.com">Contact the church</a> or <Link className="text-link" to="/register">visit registration</Link>.</p>
         </div>
-    );
-};
-
-export default FAQPage;
+    </div>;
+}

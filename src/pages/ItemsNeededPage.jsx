@@ -1,3 +1,4 @@
+import ReadError from '../components/common/ReadError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { firestoreService, collections } from '../services/firestore';
 import CategoryFilter from '../components/items/CategoryFilter';
@@ -10,6 +11,7 @@ const ItemsNeededPage = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [readFailed, setReadFailed] = useState(false);
 
     const categories = [
         { value: 'all', label: 'All Items' },
@@ -49,10 +51,13 @@ const ItemsNeededPage = () => {
     }, [filterItems]);
 
     const fetchItems = async () => {
+        setLoading(true);
+        setReadFailed(false);
         try {
             const data = await firestoreService.getAll(collections.ITEMS_INVENTORY);
             setItems(data || []);
         } catch (error) {
+            setReadFailed(true);
             console.error('Error fetching items:', error);
         } finally {
             setLoading(false);
@@ -77,6 +82,8 @@ const ItemsNeededPage = () => {
     };
 
     const totals = calculateTotals();
+
+    if (readFailed) return <ReadError onRetry={fetchItems} />;
 
     if (loading) {
         return (

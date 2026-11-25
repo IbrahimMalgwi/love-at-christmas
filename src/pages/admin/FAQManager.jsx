@@ -1,9 +1,15 @@
+import { saveFaq, deleteFaq } from '../../services/faqPublication';
+import ReadError from '../../components/common/ReadError';
 import React, { useState, useEffect } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
 
 const FAQManager = () => {
+    const [saving, setSaving] = useState(false);
+    const [notice, setNotice] = useState('');
+    const [saveError, setSaveError] = useState('');
     const [faqs, setFaqs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [readFailed, setReadFailed] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingFaq, setEditingFaq] = useState(null);
     const [formData, setFormData] = useState({
@@ -25,10 +31,18 @@ const FAQManager = () => {
     }, []);
 
     const fetchFAQs = async () => {
+        setLoading(true);
+        setReadFailed(false);
         try {
-            const data = await firestoreService.getAll(collections.FAQS);
-            setFaqs(data || []);
+            const [live, drafts] = await Promise.all([
+                firestoreService.getAll(collections.FAQS),
+                firestoreService.getAll('faq_drafts')
+            ]);
+            const entries = new Map(live.map(faq => [faq.id, { ...faq, status: 'Published' }]));
+            drafts.forEach(faq => entries.set(faq.id, { ...faq, status: entries.has(faq.id) ? 'Published with draft' : 'Draft' }));
+            setFaqs([...entries.values()]);
         } catch (error) {
+            setReadFailed(true);
             console.error('Error fetching FAQs:', error);
         } finally {
             setLoading(false);
@@ -38,23 +52,26 @@ const FAQManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (saving) return;
+        setNotice('');
+        setSaveError('');
+        const question = formData.question.trim();
+        const answer = formData.answer.trim();
+        if (!question || !answer) {
+            setSaveError('Enter a question and answer.');
+            return;
+        }
+        setSaving(true);
         try {
-            const faqData = {
-                ...formData,
-                order: parseInt(formData.order) || 0
-            };
-
-            if (editingFaq) {
-                await firestoreService.update(collections.FAQS, editingFaq.id, faqData);
-            } else {
-                await firestoreService.add(collections.FAQS, faqData);
-            }
-
+            const publish = e.nativeEvent.submitter?.value === 'publish';
+            await saveFaq({ ...formData, question, answer, order: Number(formData.order) || 0 }, editingFaq, publish);
+            setNotice(publish ? 'FAQ published.' : 'FAQ draft saved.');
             resetForm();
             fetchFAQs();
-        } catch (error) {
-            console.error('Error saving FAQ:', error);
-            alert('Failed to save FAQ: ' + error.message);
+        } catch {
+            setSaveError('Could not save the FAQ. Try again.');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -84,7 +101,8 @@ const FAQManager = () => {
         if (!window.confirm('Are you sure you want to delete this FAQ?')) return;
 
         try {
-            await firestoreService.delete(collections.FAQS, id);
+            await deleteFaq(id);
+            setNotice('FAQ removed.');
             fetchFAQs();
         } catch (error) {
             console.error('Error deleting FAQ:', error);
@@ -92,12 +110,16 @@ const FAQManager = () => {
         }
     };
 
+    if (readFailed) return <ReadError onRetry={fetchFAQs} />;
+
     if (loading) {
         return <div>Loading FAQs...</div>;
     }
 
     return (
         <div className="space-y-6">
+            {notice && <p role="status">{notice}</p>}
+            {saveError && <p role="alert">{saveError}</p>}
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">FAQ Management</h2>
                 <button
@@ -116,10 +138,11 @@ const FAQManager = () => {
                     </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="faq-category" className="block text-sm font-medium text-gray-700 mb-1">
                                 Category
                             </label>
                             <select
+                                id="faq-category"
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
@@ -133,11 +156,12 @@ const FAQManager = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="faq-question" className="block text-sm font-medium text-gray-700 mb-1">
                                 Question
                             </label>
                             <input
                                 type="text"
+                                id="faq-question"
                                 value={formData.question}
                                 onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
@@ -146,10 +170,11 @@ const FAQManager = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="faq-answer" className="block text-sm font-medium text-gray-700 mb-1">
                                 Answer
                             </label>
                             <textarea
+                                id="faq-answer"
                                 value={formData.answer}
                                 onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                                 rows={4}
@@ -159,11 +184,12 @@ const FAQManager = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="faq-order" className="block text-sm font-medium text-gray-700 mb-1">
                                 Order
                             </label>
                             <input
                                 type="number"
+                                id="faq-order"
                                 value={formData.order}
                                 onChange={(e) => setFormData({ ...formData, order: e.target.value })}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
@@ -171,7 +197,8 @@ const FAQManager = () => {
                             />
                         </div>
 
-                        <div className="flex justify-end space-x-3">
+                        <div className="button-row">
+                            <button className="button button-outline" type="submit" value="draft" disabled={saving}>Save draft</button>
                             <button
                                 type="button"
                                 onClick={resetForm}
@@ -181,9 +208,11 @@ const FAQManager = () => {
                             </button>
                             <button
                                 type="submit"
+                                value="publish"
+                                disabled={saving}
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                             >
-                                {editingFaq ? 'Update FAQ' : 'Add FAQ'}
+                                Publish FAQ
                             </button>
                         </div>
                     </form>
@@ -215,6 +244,7 @@ const FAQManager = () => {
                             <tr key={faq.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-gray-900">{faq.question}</div>
+                                    <p className="text-sm text-gray-600">{faq.status}</p>
                                     <div className="text-sm text-gray-500 mt-1 line-clamp-2">{faq.answer}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">

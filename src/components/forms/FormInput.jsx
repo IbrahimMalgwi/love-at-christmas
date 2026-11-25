@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 const FormInput = ({
                        label,
@@ -10,12 +10,21 @@ const FormInput = ({
                        placeholder,
                        required = false,
                        options,
+                       id,
                        ...props
                    }) => {
+    const generatedId = useId();
+    const inputId = id ?? generatedId;
+    const errorId = error ? `${inputId}-error` : undefined;
+    const labelId = `${inputId}-label`;
+    const accessibility = { id: inputId, 'aria-invalid': !!error, 'aria-describedby': errorId };
+
     const renderInput = () => {
         if (type === 'select') {
             return (
                 <select
+                    {...props}
+                    {...accessibility}
                     name={name}
                     value={value}
                     onChange={onChange}
@@ -26,7 +35,7 @@ const FormInput = ({
                 >
                     <option value="">Select {label}</option>
                     {options?.map((option) => (
-                        <option key={option.value} value={option.value}>
+                        <option key={option.value} value={option.value} disabled={option.disabled} hidden={option.hidden}>
                             {option.label}
                         </option>
                     ))}
@@ -37,6 +46,7 @@ const FormInput = ({
         if (type === 'textarea') {
             return (
                 <textarea
+                    {...accessibility}
                     name={name}
                     value={value}
                     onChange={onChange}
@@ -53,7 +63,7 @@ const FormInput = ({
 
         if (type === 'radio-group') {
             return (
-                <div className="flex space-x-4">
+                <div className="flex space-x-4" role="radiogroup" aria-invalid={!!error} aria-labelledby={labelId} aria-describedby={errorId}>
                     {options?.map((option) => (
                         <label key={option.value} className="flex items-center space-x-2">
                             <input
@@ -64,6 +74,7 @@ const FormInput = ({
                                 onChange={onChange}
                                 className="text-red-600 focus:ring-red-500"
                                 required={required}
+                                aria-describedby={errorId}
                             />
                             <span>{option.label}</span>
                         </label>
@@ -74,6 +85,7 @@ const FormInput = ({
 
         return (
             <input
+                {...accessibility}
                 type={type}
                 name={name}
                 value={value}
@@ -88,13 +100,15 @@ const FormInput = ({
         );
     };
 
+    const Label = type === 'radio-group' ? 'span' : 'label';
+
     return (
         <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Label id={labelId} htmlFor={type === 'radio-group' ? undefined : inputId} className="block text-sm font-medium text-gray-700 mb-2">
                 {label} {required && <span className="text-red-500">*</span>}
-            </label>
+            </Label>
             {renderInput()}
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+            {error && <p id={errorId} role="alert" className="mt-1 text-sm text-red-600">{error}</p>}
         </div>
     );
 };

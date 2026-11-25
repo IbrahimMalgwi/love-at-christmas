@@ -1,3 +1,4 @@
+import ReadError from '../../components/common/ReadError';
 // src/pages/admin/ItemsReceivedPage.jsx
 import React, { useState, useEffect } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
@@ -5,21 +6,27 @@ import { firestoreService, collections } from '../../services/firestore';
 const ItemsReceivedPage = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [readFailed, setReadFailed] = useState(false);
 
     useEffect(() => {
         fetchItems();
     }, []);
 
     const fetchItems = async () => {
+        setLoading(true);
+        setReadFailed(false);
         try {
             const data = await firestoreService.getAll(collections.ITEMS_RECEIVED);
             setItems(data || []);
         } catch (error) {
+            setReadFailed(true);
             console.error('Error fetching items:', error);
         } finally {
             setLoading(false);
         }
     };
+
+    if (readFailed) return <ReadError onRetry={fetchItems} />;
 
     if (loading) {
         return (

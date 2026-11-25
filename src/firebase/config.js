@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,
+    connectAuthEmulator,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
@@ -9,6 +10,7 @@ import {
 } from 'firebase/auth';
 import {
     getFirestore,
+    connectFirestoreEmulator,
     collection,
     doc,
     getDoc,
@@ -21,7 +23,7 @@ import {
     orderBy,
     serverTimestamp  // MAKE SURE THIS IS IMPORTED
 } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -33,13 +35,19 @@ const firebaseConfig = {
     appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Static pages can render before local Firebase configuration is available.
+const app = firebaseConfig.apiKey && firebaseConfig.projectId ? initializeApp(firebaseConfig) : null;
 
-// Initialize services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const storage = app && firebaseConfig.storageBucket ? getStorage(app) : null;
+
+if (app && process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_FIREBASE_EMULATORS === 'true'
+    && firebaseConfig.projectId.startsWith('demo-')) {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    if (storage) connectStorageEmulator(storage, '127.0.0.1', 9199);
+}
 
 // Export Firebase functions
 export {

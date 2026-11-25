@@ -116,7 +116,7 @@ const ParticipantForm = () => {
 
     if (isSubmitted) {
         return (
-            <div className="text-center py-8">
+            <div className="text-center py-8" role="status">
                 <div className="text-green-600 text-6xl mb-4">✅</div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
                 <p className="text-gray-600 mb-4">
@@ -141,8 +141,8 @@ const ParticipantForm = () => {
                     </a>
                 </div>
 
-                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                    <p className="text-blue-800 text-sm">
+                <div className="mt-8 bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
+                    <p className="text-amber-900 text-sm">
                         <strong>Note:</strong> You can register multiple family members or friends using the "Register Another Participant" button.
                     </p>
                 </div>
@@ -152,19 +152,14 @@ const ParticipantForm = () => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Participant Registration</h2>
-                {isSubmitted === false && (
-                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        New Registration
-                    </span>
-                )}
-            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Participant Registration</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
                     label="Full Name"
                     name="full_name"
+                    autoComplete="name"
+                    maxLength={200}
                     value={formData.full_name}
                     onChange={handleChange}
                     error={errors.full_name}
@@ -175,6 +170,9 @@ const ParticipantForm = () => {
                 <FormInput
                     label="Phone Number"
                     name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    maxLength={30}
                     value={formData.phone}
                     onChange={handleChange}
                     error={errors.phone}
@@ -187,6 +185,8 @@ const ParticipantForm = () => {
                 label="Full Address"
                 type="textarea"
                 name="address"
+                autoComplete="street-address"
+                maxLength={1000}
                 value={formData.address}
                 onChange={handleChange}
                 error={errors.address}
@@ -210,6 +210,7 @@ const ParticipantForm = () => {
                     label="Age"
                     type="number"
                     name="age"
+                    inputMode="numeric"
                     value={formData.age}
                     onChange={handleChange}
                     error={errors.age}
@@ -222,10 +223,13 @@ const ParticipantForm = () => {
 
             {/* Religion Dropdown */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="participant-religion" className="block text-sm font-medium text-gray-700 mb-2">
                     Religion <span className="text-red-500">*</span>
                 </label>
                 <select
+                    id="participant-religion"
+                    aria-invalid={!!errors.religion}
+                    aria-describedby={errors.religion ? 'participant-religion-error' : undefined}
                     name="religion"
                     value={formData.religion}
                     onChange={handleChange}
@@ -246,7 +250,7 @@ const ParticipantForm = () => {
                     ))}
                 </select>
                 {errors.religion && (
-                    <p className="mt-1 text-sm text-red-500">{errors.religion}</p>
+                    <p id="participant-religion-error" role="alert" className="mt-1 text-sm text-red-500">{errors.religion}</p>
                 )}
             </div>
 
@@ -254,6 +258,7 @@ const ParticipantForm = () => {
                 label="Special Needs (Optional)"
                 type="textarea"
                 name="special_needs"
+                maxLength={4000}
                 value={formData.special_needs}
                 onChange={handleChange}
                 error={errors.special_needs}
@@ -261,7 +266,7 @@ const ParticipantForm = () => {
             />
 
             {errors.submit && (
-                <div className="text-red-600 text-sm">{errors.submit}</div>
+                <div className="text-red-600 text-sm" role="alert">{errors.submit}</div>
             )}
 
             <button
@@ -272,8 +277,8 @@ const ParticipantForm = () => {
                 {isSubmitting ? 'Submitting...' : 'Register Participant'}
             </button>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-blue-800 text-sm">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-amber-900 text-sm">
                     <strong>Note:</strong> All information provided is kept confidential and used solely
                     for the purpose of the Love at Christmas program. We respect your privacy and
                     are committed to protecting your personal information.

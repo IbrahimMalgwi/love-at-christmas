@@ -1,6 +1,7 @@
 // src/pages/admin/CSVUploadPage.jsx
 import React, { useState } from 'react';
-import CSVUploader from '../admin/ItemsReceivedPage';
+import CSVUploader from './CSVUploader';
+import { importSchemas } from '../../services/csvService';
 
 const CSVUploadPage = () => {
     const [recentUploads, setRecentUploads] = useState([]);
@@ -91,10 +92,9 @@ const CSVUploadPage = () => {
                     <div>
                         <h4 className="font-medium text-blue-800 mb-2">Required Columns by Collection:</h4>
                         <ul className="text-sm text-blue-700 space-y-1">
-                            <li><strong>Volunteers:</strong> full_name, email, phone, church, role</li>
-                            <li><strong>Participants:</strong> full_name, phone, address, sex, age</li>
-                            <li><strong>Items Inventory:</strong> item_name, category, quantity_needed, unit_price</li>
-                            <li><strong>FAQs:</strong> question, answer, category, order</li>
+                            {Object.values(importSchemas).map(({ label, requiredFields }) => (
+                                <li key={label}><strong>{label}</strong> {requiredFields.join(', ')}</li>
+                            ))}
                         </ul>
                     </div>
                     <div>

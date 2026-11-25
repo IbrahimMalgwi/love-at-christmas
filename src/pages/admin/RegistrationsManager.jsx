@@ -1,3 +1,5 @@
+import ReadError from '../../components/common/ReadError';
+import Papa from 'papaparse';
 import React, { useState, useEffect, useCallback } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
 
@@ -9,6 +11,7 @@ const RegistrationsManager = () => {
     const [filteredParticipants, setFilteredParticipants] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [readFailed, setReadFailed] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -53,6 +56,8 @@ const RegistrationsManager = () => {
     }, [filterData]);
 
     const fetchData = async () => {
+        setLoading(true);
+        setReadFailed(false);
         try {
             const [volunteersData, participantsData] = await Promise.all([
                 firestoreService.getAll(collections.VOLUNTEERS),
@@ -62,6 +67,7 @@ const RegistrationsManager = () => {
             setVolunteers(volunteersData || []);
             setParticipants(participantsData || []);
         } catch (error) {
+            setReadFailed(true);
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
@@ -178,16 +184,17 @@ const RegistrationsManager = () => {
             return;
         }
 
-        const headers = Object.keys(data[0] || {}).filter(key => key !== 'id');
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row =>
-                headers.map(header => {
-                    const value = row[header] || '';
-                    return `"${value.toString().replace(/"/g, '""')}"`;
-                }).join(',')
-            )
-        ].join('\n');
+        const fields = filename === 'volunteers'
+            ? ['full_name', 'email', 'phone', 'church', 'role', 'additional_comments', 'createdAt']
+            : ['full_name', 'phone', 'address', 'sex', 'age', 'religion', 'special_needs', 'createdAt'];
+        const csvContent = Papa.unparse({
+            fields,
+            data: data.map(row => fields.map(field => {
+                const value = row[field];
+                if (field === 'createdAt') return value?.toDate?.().toISOString() ?? value ?? '';
+                return value ?? '';
+            }))
+        }, { escapeFormulae: /^[\s\uFEFF]*[=+\-@]|^[\t\r\n]/u });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
@@ -222,6 +229,8 @@ const RegistrationsManager = () => {
             alert(`Failed to delete ${type}: ` + error.message);
         }
     };
+
+    if (readFailed) return <ReadError onRetry={fetchData} />;
 
     if (loading) {
         return (

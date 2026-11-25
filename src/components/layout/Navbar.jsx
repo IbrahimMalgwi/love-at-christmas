@@ -1,196 +1,35 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const Navbar = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const location = useLocation();
-    const { isAdmin, signOut } = useAuth();
-
-    // Base navigation items for all users
-    const baseNavItems = [
-        { name: 'Home', path: '/' },
-        { name: 'Donate', path: '/donate' },
-        { name: 'Register', path: '/register' },
-        { name: 'Gallery', path: '/gallery' },
-        { name: 'FAQ', path: '/faq' },
-    ];
-
-    // Add Items Needed only for admin users
-    const navItems = isAdmin
-        ? [
-            ...baseNavItems.slice(0, 1), // Home
-            { name: 'Items Needed', path: '/items' },
-            ...baseNavItems.slice(1) // Rest of the items
-        ]
-        : baseNavItems;
-
-    const isActive = (path) => location.pathname === path;
-
-    const handleLogout = async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
-    };
+export default function Navbar() {
+    const [open, setOpen] = useState(false);
+    const { isAdmin, logout } = useAuth();
+    const close = () => setOpen(false);
 
     return (
-        <nav className="bg-white shadow-lg sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
-                    <div className="flex items-center">
-                        <Link to="/" className="flex-shrink-0 flex items-center">
-                            <img
-                                src="/logo.png"
-                                alt="Love at Christmas Logo"
-                                className="h-10 w-10 object-contain"
-                                onError={(e) => {
-                                    // Fallback if logo doesn't exist
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
-                            />
-                            {/* Fallback: Text-based logo */}
-                            <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg hidden">
-                                LAC
-                            </div>
-                            <span className="ml-3 text-xl font-bold text-gray-800">
-                                Love at Christmas
-                            </span>
-                        </Link>
-                    </div>
-
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                to={item.path}
-                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    isActive(item.path)
-                                        ? 'text-red-600 border-b-2 border-red-600'
-                                        : 'text-gray-700 hover:text-red-600'
-                                }`}
-                            >
-                                {item.name}
-                            </Link>
-                        ))}
-
-                        {/* Admin Login/Logout */}
-                        {isAdmin ? (
-                            <div className="flex items-center space-x-4">
-                                <Link
-                                    to="/admin/dashboard"
-                                    className="px-3 py-2 rounded-md text-sm font-medium text-green-600 hover:text-green-700 border border-green-600 hover:bg-green-50 transition-colors"
-                                >
-                                    Admin Dashboard
-                                </Link>
-                                <button
-                                    onClick={handleLogout}
-                                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        ) : (
-                            <Link
-                                to="/admin/login"
-                                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-red-600 transition-colors border border-gray-300 hover:border-red-300"
-                            >
-                                Admin Login
-                            </Link>
-                        )}
-                    </div>
-
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-red-600 focus:outline-none"
-                        >
-                            <svg
-                                className="h-6 w-6"
-                                stroke="currentColor"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                {isOpen ? (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                ) : (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                )}
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Menu */}
-                {isOpen && (
-                    <div className="md:hidden">
-                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-                            {navItems.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    to={item.path}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`block px-3 py-2 rounded-md text-base font-medium ${
-                                        isActive(item.path)
-                                            ? 'text-red-600 bg-red-50'
-                                            : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {item.name}
-                                </Link>
-                            ))}
-
-                            {/* Mobile Admin Login/Logout */}
-                            <div className="border-t border-gray-200 pt-2">
-                                {isAdmin ? (
-                                    <>
-                                        <Link
-                                            to="/admin/dashboard"
-                                            onClick={() => setIsOpen(false)}
-                                            className="block px-3 py-2 rounded-md text-base font-medium text-green-600 bg-green-50 hover:bg-green-100"
-                                        >
-                                            Admin Dashboard
-                                        </Link>
-                                        <button
-                                            onClick={() => {
-                                                handleLogout();
-                                                setIsOpen(false);
-                                            }}
-                                            className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50"
-                                        >
-                                            Logout
-                                        </button>
-                                    </>
-                                ) : (
-                                    <Link
-                                        to="/admin/login"
-                                        onClick={() => setIsOpen(false)}
-                                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 border border-gray-200"
-                                    >
-                                        Admin Login
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
+        <header className="site-header">
+            <a className="skip-link" href="#main-content">Skip to content</a>
+            <div className="site-wrap header-layout">
+                <Link to="/" className="brand" onClick={close}>
+                    <img src={process.env.PUBLIC_URL + '/logo.png'} alt="Foursquare Gospel Church" width="44" height="44" />
+                    <span>Love at Christmas<small>Foursquare Gospel Church Sabo</small></span>
+                </Link>
+                <button className="menu-toggle button button-outline" type="button" aria-expanded={open}
+                    aria-controls="site-navigation" onClick={() => setOpen(!open)}>{open ? 'Close' : 'Menu'}</button>
+                <nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Main navigation">
+                    <NavLink to="/" end onClick={close}>Home</NavLink>
+                    <NavLink to="/register" onClick={close}>Register</NavLink>
+                    <NavLink to="/gallery" onClick={close}>Gallery</NavLink>
+                    <NavLink to="/faq" onClick={close}>FAQ</NavLink>
+                    {isAdmin && <>
+                        <NavLink to="/items" onClick={close}>Items needed</NavLink>
+                        <NavLink to="/admin/dashboard" onClick={close}>Dashboard</NavLink>
+                        <button type="button" onClick={() => logout().catch(console.error)}>Sign out</button>
+                    </>}
+                    <NavLink to="/donate" className="button" onClick={close}>Donate</NavLink>
+                </nav>
             </div>
-        </nav>
+        </header>
     );
-};
-
-export default Navbar;
+}

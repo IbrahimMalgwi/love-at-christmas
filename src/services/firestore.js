@@ -1,3 +1,4 @@
+import { limit } from 'firebase/firestore';
 // src/services/firestore.js
 import {
     db,
@@ -14,14 +15,20 @@ import {
     serverTimestamp
 } from '../firebase/config';
 
+const getDatabase = () => {
+    if (!db) throw new Error('Firebase is not configured.');
+    return db;
+};
+
 // Generic CRUD operations
 export const firestoreService = {
     // Get all documents from a collection
-    getAll: async (collectionName, orderField = 'createdAt', orderDirection = 'desc') => {
+    getAll: async (collectionName, orderField = 'createdAt', orderDirection = 'desc', maximum) => {
         try {
             const q = query(
-                collection(db, collectionName),
-                orderBy(orderField, orderDirection)
+                collection(getDatabase(), collectionName),
+                orderBy(orderField, orderDirection),
+                ...(maximum ? [limit(maximum)] : [])
             );
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map(doc => ({
@@ -30,7 +37,7 @@ export const firestoreService = {
             }));
         } catch (error) {
             console.error(`Error fetching ${collectionName}:`, error);
-            return [];
+            throw error;
         }
     },
 
@@ -38,7 +45,7 @@ export const firestoreService = {
     getWhere: async (collectionName, field, operator, value, orderField = 'createdAt') => {
         try {
             const q = query(
-                collection(db, collectionName),
+                collection(getDatabase(), collectionName),
                 where(field, operator, value),
                 orderBy(orderField, 'desc')
             );
@@ -49,14 +56,14 @@ export const firestoreService = {
             }));
         } catch (error) {
             console.error(`Error fetching ${collectionName} where ${field} ${operator} ${value}:`, error);
-            return [];
+            throw error;
         }
     },
 
     // Get single document
     getById: async (collectionName, id) => {
         try {
-            const docRef = doc(db, collectionName, id);
+            const docRef = doc(getDatabase(), collectionName, id);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 return { id: docSnap.id, ...docSnap.data() };
@@ -64,14 +71,14 @@ export const firestoreService = {
             return null;
         } catch (error) {
             console.error(`Error fetching ${collectionName}/${id}:`, error);
-            return null;
+            throw error;
         }
     },
 
     // Add document
     add: async (collectionName, data) => {
         try {
-            const docRef = await addDoc(collection(db, collectionName), {
+            const docRef = await addDoc(collection(getDatabase(), collectionName), {
                 ...data,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
@@ -86,7 +93,7 @@ export const firestoreService = {
     // Update document
     update: async (collectionName, id, data) => {
         try {
-            const docRef = doc(db, collectionName, id);
+            const docRef = doc(getDatabase(), collectionName, id);
             await updateDoc(docRef, {
                 ...data,
                 updatedAt: serverTimestamp()
@@ -101,7 +108,7 @@ export const firestoreService = {
     // Delete document
     delete: async (collectionName, id) => {
         try {
-            await deleteDoc(doc(db, collectionName, id));
+            await deleteDoc(doc(getDatabase(), collectionName, id));
             return true;
         } catch (error) {
             console.error(`Error deleting ${collectionName}/${id}:`, error);

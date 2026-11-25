@@ -1,7 +1,6 @@
 // src/components/admin/CSVUploader.jsx
 import React, { useState } from 'react';
-import { csvService } from '../../services/csvService';
-import { collections } from '../../services/firestore';
+import { csvService, importSchemas } from '../../services/csvService';
 
 const CSVUploader = ({ onUploadComplete }) => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -11,34 +10,21 @@ const CSVUploader = ({ onUploadComplete }) => {
     const [errors, setErrors] = useState([]);
     const [result, setResult] = useState(null);
 
-    const collectionOptions = [
-        { value: 'volunteers', label: 'Volunteers', requiredFields: ['full_name', 'email', 'phone'] },
-        { value: 'participants', label: 'Participants', requiredFields: ['full_name', 'phone', 'address'] },
-        { value: 'items_inventory', label: 'Items Inventory', requiredFields: ['item_name', 'category', 'quantity_needed'] },
-        { value: 'faqs', label: 'FAQs', requiredFields: ['question', 'answer'] }
-    ];
+    const collectionOptions = Object.entries(importSchemas).map(([value, schema]) => ({
+        value, ...schema
+    }));
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                setSelectedFile(null);
                 setErrors(['Please select a CSV file']);
                 return;
             }
             setSelectedFile(file);
             setErrors([]);
         }
-    };
-
-    const validateFile = async (csvData) => {
-        const currentCollection = collectionOptions.find(opt => opt.value === collectionType);
-        const validation = csvService.validateCSV(csvData, currentCollection.requiredFields);
-
-        if (!validation.isValid) {
-            setErrors(validation.errors);
-            return false;
-        }
-        return true;
     };
 
     const handleUpload = async () => {
@@ -53,23 +39,9 @@ const CSVUploader = ({ onUploadComplete }) => {
         setResult(null);
 
         try {
-            // Step 1: Parse CSV
-            const csvData = await csvService.parseCSV(selectedFile);
-
-            // Step 2: Validate CSV structure
-            const isValid = await validateFile(csvData);
-            if (!isValid) {
-                setUploading(false);
-                return;
-            }
-
-            // Step 3: Upload to Firestore with progress tracking
+            const csvData = await csvService.parseCSV(selectedFile, importSchemas[collectionType]);
             const uploadResult = await csvService.uploadCSVData(
-                getFirestoreCollectionName(collectionType),
-                csvData,
-                (progressData) => {
-                    setProgress(progressData.percentage);
-                }
+                collectionType, csvData, ({ percentage }) => setProgress(percentage)
             );
 
             setResult(uploadResult);
@@ -87,16 +59,6 @@ const CSVUploader = ({ onUploadComplete }) => {
         } finally {
             setUploading(false);
         }
-    };
-
-    const getFirestoreCollectionName = (type) => {
-        const mapping = {
-            'volunteers': collections.VOLUNTEERS,
-            'participants': collections.PARTICIPANTS,
-            'items_inventory': collections.ITEMS_INVENTORY,
-            'faqs': collections.FAQS
-        };
-        return mapping[type] || type;
     };
 
     const downloadTemplate = () => {

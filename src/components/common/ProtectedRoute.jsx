@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
+const ProtectedRoute = ({ children, requireAdmin = true }) => {
     const { user, admin, loading } = useAuth();
 
     if (loading) {
@@ -32,10 +32,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
                         You don't have administrator privileges to access this page.
                     </p>
                     <a
-                        href="/admin/dashboard"
+                        href="/"
                         className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                     >
-                        Go to Dashboard
+                        Go to Homepage
                     </a>
                 </div>
             </div>
