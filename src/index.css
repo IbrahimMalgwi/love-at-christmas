@@ -299,3 +299,27 @@ body { background: var(--cream); color: var(--ink); font: 1rem/1.65 'Segoe UI', 
     .hero .button { padding-inline: .95rem; }
     .photo-grid-featured .photo-card { grid-template-columns: 1fr; }
 }
+
+.header-actions {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+@media (max-width: 63rem) {
+    .site-nav { order: 1; }
+}
+@media (max-width: 27rem) {
+    .header-layout { gap: .6rem; }
+    .header-actions .button { padding-inline: .55rem; }
+}
+.portal-sign-in {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 1.25rem;
+}
+.portal-sign-in > div { width: min(100%, 28rem); }
+.portal-sign-in h1 { margin-block: 1rem .5rem; font: 500 2rem/1.1 var(--display); color: var(--green); }
+.portal-sign-in form { margin-top: 1.5rem; }
+.portal-sign-in form .button { width: 100%; }

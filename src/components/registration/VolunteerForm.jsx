@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { currentRegistrationYear } from '../../shared/registrationYear.mjs';
 import { firestoreService, collections } from '../../services/firestore';
 import FormInput from '../forms/FormInput';
 
@@ -74,12 +75,15 @@ const VolunteerForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if (isSubmitting || !validateForm()) return;
 
         setIsSubmitting(true);
 
         try {
-            await firestoreService.add(collections.VOLUNTEERS, formData);
+            await firestoreService.add(collections.VOLUNTEERS, {
+                ...formData,
+                campaignYear: currentRegistrationYear()
+            });
 
             setIsSubmitted(true);
             setFormData({

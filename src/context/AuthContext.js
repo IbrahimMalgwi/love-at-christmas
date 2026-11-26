@@ -16,7 +16,8 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if (!auth) return;
         let revision = 0;
-        const unsubscribe = onIdTokenChanged(auth, async user => {
+        const unsubscribe = onIdTokenChanged(auth, async firebaseUser => {
+            const user = firebaseUser?.isAnonymous ? null : firebaseUser;
             const currentRevision = ++revision;
             setSession({ user, admin: false, loading: !!user });
             if (!user) return;
@@ -37,11 +38,8 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        if (!auth) throw new Error('Admin sign-in is unavailable until Firebase is configured.');
-        const { user } = await signInWithEmailAndPassword(auth, email, password);
-        const isAdmin = (await user.getIdTokenResult()).claims.admin === true;
-        if (!isAdmin) await signOut(auth);
-        return { isAdmin };
+        if (!auth) throw new Error('Sign-in is unavailable until Firebase is configured.');
+        await signInWithEmailAndPassword(auth, email, password);
     };
 
     return (

@@ -27,7 +27,7 @@ export const firestoreService = {
         try {
             const q = query(
                 collection(getDatabase(), collectionName),
-                orderBy(orderField, orderDirection),
+                ...(orderField ? [orderBy(orderField, orderDirection)] : []),
                 ...(maximum ? [limit(maximum)] : [])
             );
             const querySnapshot = await getDocs(q);

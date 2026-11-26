@@ -1,9 +1,7 @@
-import participantIdentity from '../shared/participantIdentity.cjs';
+import { participantKey } from '../shared/participantIdentity.mjs';
 import Papa from 'papaparse';
 import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
-const { participantKey } = participantIdentity;
 
 export const importSchemas = {
     volunteers: {

@@ -14,7 +14,7 @@ export default function Footer() {
                 </div>
                 <nav aria-label="Footer navigation">
                     <h2>Explore</h2>
-                    <Link to="/donate">Donate</Link><Link to="/register">Register</Link>
+                    <Link to="/about">About</Link><Link to="/donate">Donate</Link><Link to="/register">Register</Link>
                     <Link to="/gallery">Gallery</Link><Link to="/faq">FAQ</Link>
                 </nav>
                 <address>
@@ -25,7 +25,7 @@ export default function Footer() {
                     <p>32A Commercial Avenue Sabo Yaba, Lagos, Nigeria</p>
                 </address>
             </div>
-            <div className="site-wrap footer-bottom"><span>© {new Date().getFullYear()} Love at Christmas</span><Link to="/admin/login">Admin sign-in</Link></div>
+            <div className="site-wrap footer-bottom"><span>© {new Date().getFullYear()} Love at Christmas</span><Link to="/login">Sign in</Link></div>
         </footer>
     );
 }

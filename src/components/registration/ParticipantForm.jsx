@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import participantIdentity from '../../shared/participantIdentity.cjs';
+import { normalizePhone } from '../../shared/participantIdentity.mjs';
+import { useAuth } from '../../context/AuthContext';
 import FormInput from '../forms/FormInput';
 
-const { normalizePhone } = participantIdentity;
-
 const ParticipantForm = () => {
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
@@ -88,9 +88,10 @@ const ParticipantForm = () => {
         setIsSubmitting(true);
 
         try {
+            const token = await user.getIdToken();
             const response = await fetch('/api/participant-registration', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ ...formData, age: Number(formData.age) })
             });
             if (!response.ok || !(await response.json()).ok) {
@@ -126,7 +127,7 @@ const ParticipantForm = () => {
                 <div className="text-green-600 text-6xl mb-4">✅</div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration received</h2>
                 <p className="text-gray-600 mb-4">
-                    If we already had a registration with this name and phone number, we kept the existing record.
+                    If we already had a registration with this name and phone number for this year, we kept the existing record.
                 </p>
                 <p className="text-sm text-gray-500 mb-8">
                     We'll contact you with details about the event and how to receive your Christmas package.
@@ -140,10 +141,10 @@ const ParticipantForm = () => {
                         Register Another Participant
                     </button>
                     <a
-                        href="/"
+                        href="/dashboard"
                         className="bg-gray-200 text-gray-800 py-3 px-8 rounded-lg font-semibold hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                     >
-                        Return to Home
+                        Back to dashboard
                     </a>
                 </div>
 

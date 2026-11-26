@@ -3,32 +3,49 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
-    const [open, setOpen] = useState(false);
-    const { isAdmin, logout } = useAuth();
-    const close = () => setOpen(false);
+    const { user, logout, isAdmin } = useAuth();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [signOutFailed, setSignOutFailed] = useState(false);
+
+    const closeMenu = () => setMenuOpen(false);
+
+    async function signOut() {
+        setSignOutFailed(false);
+        try {
+            await logout();
+        } catch {
+            setSignOutFailed(true);
+        }
+    }
 
     return (
         <header className="site-header">
             <a className="skip-link" href="#main-content">Skip to content</a>
             <div className="site-wrap header-layout">
-                <Link to="/" className="brand" onClick={close}>
-                    <img src={process.env.PUBLIC_URL + '/logo.png'} alt="Foursquare Gospel Church" width="44" height="44" />
+                <Link to="/" className="brand" onClick={closeMenu}>
+                    <img src={process.env.PUBLIC_URL + '/logo.png'} alt="" width="44" height="44" />
                     <span>Love at Christmas<small>Foursquare Gospel Church Sabo</small></span>
                 </Link>
-                <button className="menu-toggle button button-outline" type="button" aria-expanded={open}
-                    aria-controls="site-navigation" onClick={() => setOpen(!open)}>{open ? 'Close' : 'Menu'}</button>
-                <nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Main navigation">
-                    <NavLink to="/" end onClick={close}>Home</NavLink>
-                    <NavLink to="/register" onClick={close}>Register</NavLink>
-                    <NavLink to="/gallery" onClick={close}>Gallery</NavLink>
-                    <NavLink to="/faq" onClick={close}>FAQ</NavLink>
-                    {isAdmin && <>
-                        <NavLink to="/items" onClick={close}>Items needed</NavLink>
-                        <NavLink to="/admin/dashboard" onClick={close}>Dashboard</NavLink>
-                        <button type="button" onClick={() => logout().catch(console.error)}>Sign out</button>
+                <nav id="site-navigation" className={menuOpen ? 'site-nav is-open' : 'site-nav'} aria-label="Main navigation">
+                    <NavLink to="/" end onClick={closeMenu}>Home</NavLink>
+                    <NavLink to="/about" onClick={closeMenu}>About</NavLink>
+                    <NavLink to="/gallery" onClick={closeMenu}>Gallery</NavLink>
+                    <NavLink to="/faq" onClick={closeMenu}>FAQ</NavLink>
+                    <NavLink to="/donate" onClick={closeMenu}>Donate</NavLink>
+                    {user && <>
+                        <NavLink to="/register" onClick={closeMenu}>Registration</NavLink>
+                        <NavLink to={isAdmin ? '/admin/dashboard' : '/dashboard'} onClick={closeMenu}>Dashboard</NavLink>
                     </>}
-                    <NavLink to="/donate" className="button" onClick={close}>Donate</NavLink>
                 </nav>
+                <div className="header-actions">
+                    {user ? <button className="button button-outline" type="button" onClick={signOut}>Sign out</button>
+                        : <Link className="button" to="/login" onClick={closeMenu}>Sign in</Link>}
+                    <button className="menu-toggle button button-outline" type="button" aria-expanded={menuOpen}
+                        aria-controls="site-navigation" onClick={() => setMenuOpen(current => !current)}>
+                        {menuOpen ? 'Close' : 'Menu'}
+                    </button>
+                </div>
+                {signOutFailed && <p role="alert">Could not sign out. Try again.</p>}
             </div>
         </header>
     );

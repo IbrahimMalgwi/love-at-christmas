@@ -1,9 +1,10 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ProtectedRoute = ({ children, requireAdmin = true }) => {
     const { user, admin, loading } = useAuth();
+    const { pathname } = useLocation();
 
     if (loading) {
         return (
@@ -18,7 +19,7 @@ const ProtectedRoute = ({ children, requireAdmin = true }) => {
 
     // If not authenticated at all, redirect to login
     if (!user) {
-        return <Navigate to="/admin/login" replace />;
+        return <Navigate to="/login" replace state={{ from: pathname }} />;
     }
 
     // If route requires admin but user is not admin
@@ -31,12 +32,12 @@ const ProtectedRoute = ({ children, requireAdmin = true }) => {
                     <p className="text-gray-600 mb-4">
                         You don't have administrator privileges to access this page.
                     </p>
-                    <a
-                        href="/"
+                    <Link
+                        to="/dashboard"
                         className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                     >
-                        Go to Homepage
-                    </a>
+                        Back to dashboard
+                    </Link>
                 </div>
             </div>
         );

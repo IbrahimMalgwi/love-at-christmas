@@ -1,13 +1,14 @@
-import participantIdentity from '../../shared/participantIdentity.cjs';
+import { currentRegistrationYear, registrationDate, registrationYear } from '../../shared/registrationYear.mjs';
+import { normalizePhone } from '../../shared/participantIdentity.mjs';
 import ReadError from '../../components/common/ReadError';
 import Papa from 'papaparse';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
-
-const { normalizePhone } = participantIdentity;
 
 const RegistrationsManager = () => {
     const [activeTab, setActiveTab] = useState('volunteers');
+    const year = currentRegistrationYear();
+    const [selectedYear, setSelectedYear] = useState(String(year));
     const [volunteers, setVolunteers] = useState([]);
     const [participants, setParticipants] = useState([]);
     const [filteredVolunteers, setFilteredVolunteers] = useState([]);
@@ -20,10 +21,24 @@ const RegistrationsManager = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
+    const availableYears = useMemo(() => {
+        const years = new Set([year, year - 1]);
+        [...volunteers, ...participants].forEach(record => years.add(registrationYear(record)));
+        return [...years].filter(entry => entry !== null).sort((first, second) => second - first);
+    }, [year, volunteers, participants]);
+
+    const matchesYear = useCallback(record => {
+        const value = registrationYear(record);
+        return (value === null ? 'undated' : String(value)) === selectedYear;
+    }, [selectedYear]);
+    const annualVolunteers = useMemo(() => volunteers.filter(matchesYear), [volunteers, matchesYear]);
+    const annualParticipants = useMemo(() => participants.filter(matchesYear), [participants, matchesYear]);
+    const hasUndated = [...volunteers, ...participants].some(record => registrationYear(record) === null);
+
     const filterData = useCallback(() => {
         if (!searchTerm) {
-            setFilteredVolunteers(volunteers);
-            setFilteredParticipants(participants);
+            setFilteredVolunteers(annualVolunteers);
+            setFilteredParticipants(annualParticipants);
             return;
         }
 
@@ -31,7 +46,7 @@ const RegistrationsManager = () => {
         const exactPhone = normalizePhone(searchTerm);
 
         setFilteredVolunteers(
-            volunteers.filter(volunteer =>
+            annualVolunteers.filter(volunteer =>
                 volunteer.full_name?.toLowerCase().includes(lowerSearch) ||
                 volunteer.email?.toLowerCase().includes(lowerSearch) ||
                 volunteer.phone?.toLowerCase().includes(lowerSearch) ||
@@ -41,7 +56,7 @@ const RegistrationsManager = () => {
         );
 
         setFilteredParticipants(
-            participants.filter(participant =>
+            annualParticipants.filter(participant =>
                 participant.full_name?.toLowerCase().includes(lowerSearch) ||
                 participant.phone?.toLowerCase().includes(lowerSearch) ||
                 (exactPhone && normalizePhone(participant.phone) === exactPhone) ||
@@ -49,7 +64,7 @@ const RegistrationsManager = () => {
                 participant.religion?.toLowerCase().includes(lowerSearch)
             )
         );
-    }, [searchTerm, volunteers, participants]);
+    }, [searchTerm, annualVolunteers, annualParticipants]);
 
     useEffect(() => {
         fetchData();
@@ -65,12 +80,14 @@ const RegistrationsManager = () => {
         setReadFailed(false);
         try {
             const [volunteersData, participantsData] = await Promise.all([
-                firestoreService.getAll(collections.VOLUNTEERS),
-                firestoreService.getAll(collections.PARTICIPANTS)
+                firestoreService.getAll(collections.VOLUNTEERS, null),
+                firestoreService.getAll(collections.PARTICIPANTS, null)
             ]);
 
-            setVolunteers(volunteersData || []);
-            setParticipants(participantsData || []);
+            const newestFirst = (first, second) => (registrationDate(second)?.getTime() ?? 0)
+                - (registrationDate(first)?.getTime() ?? 0);
+            setVolunteers(volunteersData.sort(newestFirst));
+            setParticipants(participantsData.sort(newestFirst));
         } catch (error) {
             setReadFailed(true);
             console.error('Error fetching data:', error);
@@ -190,13 +207,14 @@ const RegistrationsManager = () => {
         }
 
         const fields = filename === 'volunteers'
-            ? ['full_name', 'email', 'phone', 'church', 'role', 'additional_comments', 'createdAt']
-            : ['full_name', 'phone', 'address', 'sex', 'age', 'religion', 'special_needs', 'createdAt'];
+            ? ['full_name', 'email', 'phone', 'church', 'role', 'additional_comments', 'createdAt', 'campaignYear']
+            : ['full_name', 'phone', 'address', 'sex', 'age', 'religion', 'special_needs', 'createdAt', 'campaignYear'];
         const csvContent = Papa.unparse({
             fields,
             data: data.map(row => fields.map(field => {
                 const value = row[field];
-                if (field === 'createdAt') return value?.toDate?.().toISOString() ?? value ?? '';
+                if (field === 'createdAt') return registrationDate(row)?.toISOString() ?? '';
+                if (field === 'campaignYear') return registrationYear(row) ?? '';
                 return value ?? '';
             }))
         }, { escapeFormulae: /^[\s\uFEFF]*[=+\-@]|^[\t\r\n]/u });
@@ -205,7 +223,7 @@ const RegistrationsManager = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `${filename}-${selectedYear}-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
     };
@@ -275,8 +293,17 @@ const RegistrationsManager = () => {
                         <option value={50}>50 per page</option>
                     </select>
 
+                    <label className="flex flex-wrap items-center gap-2">
+                        Campaign year
+                        <select value={selectedYear} onChange={event => setSelectedYear(event.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-2">
+                            {availableYears.map(entry => <option key={entry} value={entry}>{entry}</option>)}
+                            {hasUndated && <option value="undated">Undated records</option>}
+                        </select>
+                    </label>
                     <input
                         type="text"
+                        aria-label="Search registrations"
                         placeholder="Search registrations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -284,7 +311,7 @@ const RegistrationsManager = () => {
                     />
                     {activeTab === 'volunteers' && (
                         <button
-                            onClick={() => exportToCSV(volunteers, 'volunteers')}
+                            onClick={() => exportToCSV(annualVolunteers, 'volunteers')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
                             Export CSV
@@ -292,7 +319,7 @@ const RegistrationsManager = () => {
                     )}
                     {activeTab === 'participants' && (
                         <button
-                            onClick={() => exportToCSV(participants, 'participants')}
+                            onClick={() => exportToCSV(annualParticipants, 'participants')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
                             Export CSV

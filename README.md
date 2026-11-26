@@ -73,8 +73,8 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 For local development, copy `.env.example` to `.env.local`, fill in the
 Firebase web app configuration, and restart `npm start`. Set the same values
-in the production build environment. Without this configuration, static pages
-still load, while live data and admin sign-in are unavailable. Keep service
+in the production build environment. Without this configuration, the sign-in page
+still loads, while sign-in and portal access are unavailable. Keep service
 account credentials out of the browser and repository.
 
 Before rolling out the app and deploying `firestore.rules` and `storage.rules`,
@@ -90,27 +90,16 @@ firebase deploy --only firestore:rules,storage --project PROJECT_ID
 
 ### Publishing campaign content
 
-Open **Admin Dashboard → Campaign** to edit dates, the announcement, volunteer
-registration, an approved gallery photo for the homepage, and verified impact.
-Save a draft to work privately. **Publish campaign** replaces the public snapshot
-that visitors see without a Vercel rebuild. Blank figures are unavailable. An
-explicit zero is displayed as zero. The old public stats document may remain for
-older clients, but this frontend uses the curated figures in the campaign snapshot.
+Open **Admin Dashboard → Campaign** to control whether volunteer registration
+is open. Draft changes apply only after publishing. Administrators can still
+manage archived gallery, FAQ, and campaign content from the dashboard. Home, About, Gallery, FAQ, and Donate are available without signing in;
+registration and dashboards require an account.
 
-FAQ edits can also be saved privately and published later. Existing FAQ and gallery
-records remain in their original collections. Saving a gallery item publishes it;
-use only images approved for public display. The 2025 flyer from the existing public
-gallery is bundled as an archive item. The hero uses a festive illustration until
-an approved gallery photo is selected. No additional Firestore indexes are required.
-
-Deploy the updated Firestore and Storage rules before using the new dashboard.
-Volunteer submissions require a published campaign with registration turned on.
-Participant registration stays available under the existing validation rules.
-The Firebase environment variables in `.env.example` are required on Vercel for
-live data. The live gallery served its flyer from Supabase Storage even though the live
-bundle also contained Firebase Auth and Firestore. Confirm the Firebase project
-used by Vercel and review any production-only records held separately before
-rolling out the redesign.
+Deploy the updated Firestore and Storage rules with the portal. Volunteer
+submissions require a signed-in account and are open unless an administrator
+closes them in the current year’s published campaign. Participant submissions require a signed-in account and
+use the Vercel function described below. No new Firestore indexes are required.
+Set the Firebase web environment variables on Vercel for the production project.
 
 ### Local Firebase preview
 
@@ -131,7 +120,7 @@ The emulator switch requires a development build and a project ID beginning with
 
 Participant registration uses the Vercel function at
 `/api/participant-registration`. Submissions are matched by normalized full name
-and Nigerian phone number across the existing participant collection. Different
+and Nigerian phone number within the same campaign year. Different
 names can share a number. The form gives the same confirmation for a new and
 an existing registration to keep registration status private.
 
@@ -151,3 +140,32 @@ IDs and timestamps. Review any skipped records whose name or phone needs correct
 ```sh
 node scripts/firebase-maintenance.cjs index-participants PROJECT_ID
 ```
+
+### Portal access
+
+Enable Email/Password in Firebase Authentication and create accounts for the
+people authorized to register participants or volunteers. New accounts have
+standard access. Assign the `admin` custom claim only to administrators using
+the maintenance command above. Standard users can open the dashboard and both
+registration forms, subject to the volunteer registration setting. Registration
+records and management tools are restricted to administrators.
+
+Deploy both Firebase rulesets and the authenticated Vercel registration
+function with the portal update. For local testing, also set
+`FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` for the Node registration handler.
+Published campaign content, FAQ entries, and gallery images can be read by
+visitors. Campaign and FAQ drafts remain restricted to administrators.
+
+### Annual registration records
+
+Participant and volunteer registration are available from the signed-in
+registration page. Volunteer registration defaults to open each new year.
+Administrators can close it for the current year by updating and publishing
+the Campaign settings.
+
+Registrations use the calendar year in Lagos. The dashboard defaults to the
+current year, with a separate selection and CSV export for previous years.
+Existing records stay in place and are grouped by their original registration
+date. Undated records appear separately. Participant duplicate checks apply
+within the same year. Run the participant indexing command above if it has
+not already been run on existing records.

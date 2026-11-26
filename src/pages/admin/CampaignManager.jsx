@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { currentRegistrationYear } from '../../shared/registrationYear.mjs';
 import FormInput from '../../components/forms/FormInput';
 import ReadError from '../../components/common/ReadError';
 import { impactFields, loadCampaignEditor, saveCampaign } from '../../services/campaign';
 import { collections, firestoreService } from '../../services/firestore';
 
-const initial = { startDate: '', endDate: '', announcement: '', volunteerOpen: false, heroImageId: '', impact: {} };
+const initial = { startDate: '', endDate: '', announcement: '', volunteerOpen: true, heroImageId: '', impact: {} };
 
 export default function CampaignManager() {
     const [form, setForm] = useState(initial);
@@ -26,6 +27,7 @@ export default function CampaignManager() {
             ]);
             const availableImages = gallery.filter(image => image.image_url && image.is_active !== false);
             const values = { ...initial, ...(content.draft ?? content.published) };
+            if (values.volunteerRegistrationYear !== currentRegistrationYear()) values.volunteerOpen = true;
             if (!availableImages.some(image => image.id === values.heroImageId)) values.heroImageId = '';
             setForm(values);
             setPublished(!!content.published);
@@ -69,7 +71,9 @@ export default function CampaignManager() {
         try {
             await saveCampaign({
                 startDate: form.startDate, endDate: form.endDate, announcement: form.announcement.trim(),
-                volunteerOpen: form.volunteerOpen, heroImageId: form.heroImageId, impact
+                volunteerOpen: form.volunteerOpen,
+                volunteerRegistrationYear: currentRegistrationYear(),
+                heroImageId: form.heroImageId, impact
             }, publish);
             if (publish) setPublished(true);
             setMessage(publish ? 'Campaign published. Visitors can see the changes now.' : 'Draft saved.');
@@ -94,7 +98,7 @@ export default function CampaignManager() {
             <FormInput label="Public announcement" type="textarea" maxLength={1000} value={form.announcement} onChange={update('announcement')} />
             <label className="check-field">
                 <input type="checkbox" checked={form.volunteerOpen} onChange={event => setForm(current => ({ ...current, volunteerOpen: event.target.checked }))} />
-                Open volunteer registration
+                Open volunteer registration for {currentRegistrationYear()}
             </label>
             <FormInput label="Homepage photo" type="select" value={form.heroImageId} onChange={update('heroImageId')}
                 options={images.map(image => ({ value: image.id, label: image.title || 'Untitled image' }))} />
