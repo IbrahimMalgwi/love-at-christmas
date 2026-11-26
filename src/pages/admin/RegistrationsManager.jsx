@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { firestoreService, collections } from '../../services/firestore';
 
 const RegistrationsManager = () => {
-    const [activeTab, setActiveTab] = useState('volunteers');
+    const [activeTab, setActiveTab] = useState('participants');
     const year = currentRegistrationYear();
     const [selectedYear, setSelectedYear] = useState(String(year));
     const [selection, setSelection] = useState(null);
@@ -41,6 +41,7 @@ const RegistrationsManager = () => {
     }, [year, volunteers, participants]);
 
     const matchesYear = useCallback(record => {
+        if (selectedYear === 'all') return true;
         const value = registrationYear(record);
         return (value === null ? 'undated' : String(value)) === selectedYear;
     }, [selectedYear]);
@@ -277,6 +278,9 @@ const RegistrationsManager = () => {
     }
 
     const displayItems = getCurrentItems();
+    const hasRegistrations = (activeTab === 'volunteers' ? volunteers : participants).length > 0;
+    const showAllYears = selectedYear !== 'all' && hasRegistrations && !searchTerm;
+    const exportScope = selectedYear === 'all' ? 'all years' : selectedYear;
     const totalItems = activeTab === 'volunteers' ? filteredVolunteers.length : filteredParticipants.length;
     const totalPagesCount = totalPages();
 
@@ -312,6 +316,7 @@ const RegistrationsManager = () => {
                             className="border border-gray-300 rounded-lg px-3 py-2">
                             {availableYears.map(entry => <option key={entry} value={entry}>{entry}</option>)}
                             {hasUndated && <option value="undated">Undated records</option>}
+                            <option value="all">All years</option>
                         </select>
                     </label>
                     <input
@@ -327,7 +332,7 @@ const RegistrationsManager = () => {
                             onClick={() => exportToCSV(annualVolunteers, 'volunteers')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
-                            Export {selectedYear === 'undated' ? 'undated' : selectedYear} CSV
+                            Export {exportScope} CSV
                         </button>
                     )}
                     {activeTab === 'participants' && (
@@ -335,7 +340,7 @@ const RegistrationsManager = () => {
                             onClick={() => exportToCSV(annualParticipants, 'participants')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
-                            Export {selectedYear === 'undated' ? 'undated' : selectedYear} CSV
+                            Export {exportScope} CSV
                         </button>
                     )}
                 </div>
@@ -389,17 +394,16 @@ const RegistrationsManager = () => {
                         {searchTerm
                             ? 'No registrations match your search.'
                             : activeTab === 'volunteers'
-                                ? 'No volunteer registrations found.'
-                                : 'No participant registrations found.'
+                                ? 'No volunteer registrations in this view.'
+                                : 'No participant registrations in this view.'
                         }
                     </div>
-                    <p className="text-gray-400 text-sm">
-                        {searchTerm && 'Try clearing your search or'}
-                        {activeTab === 'volunteers'
-                            ? 'Volunteers can register through the public form.'
-                            : 'Participants can register through the public form.'
-                        }
-                    </p>
+                    {showAllYears && (
+                        <button type="button" className="text-link" onClick={() => setSelectedYear('all')}>
+                            Show registrations from all years
+                        </button>
+                    )}
+                    {searchTerm && <p className="text-gray-500 text-sm">Try clearing your search.</p>}
                 </div>
             )}
 

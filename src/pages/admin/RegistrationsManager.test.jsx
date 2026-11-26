@@ -21,7 +21,8 @@ test('filters both lists by year and opens the selected registration details', a
     ]);
 
     render(<RegistrationsManager />);
-    await screen.findByRole('button', { name: 'View details for Current Volunteer' });
+    await screen.findByRole('button', { name: 'View details for Current Participant' });
+    fireEvent.click(screen.getByRole('button', { name: /Volunteers/ }));
     const dialog = screen.getByRole('dialog', { hidden: true });
     dialog.showModal = () => { dialog.setAttribute('open', ''); };
     dialog.close = () => {
@@ -43,4 +44,19 @@ test('filters both lists by year and opens the selected registration details', a
     fireEvent.click(screen.getByRole('button', { name: 'View details for Past Participant' }));
     expect(within(dialog).getByText('Participant details')).toBeTruthy();
     expect(within(dialog).getByText('0')).toBeTruthy();
+});
+
+test('shows previous and undated participants when the current year is empty', async () => {
+    const year = currentRegistrationYear();
+    firestoreService.getAll.mockImplementation(async collection => collection === collections.PARTICIPANTS ? [
+        { id: 'past', full_name: 'Past Participant', campaignYear: year - 1 },
+        { id: 'undated', full_name: 'Undated Participant' }
+    ] : []);
+
+    render(<RegistrationsManager />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Show registrations from all years' }));
+
+    expect(screen.getByLabelText('Campaign year')).toHaveValue('all');
+    expect(screen.getByRole('button', { name: 'View details for Past Participant' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'View details for Undated Participant' })).toBeVisible();
 });
