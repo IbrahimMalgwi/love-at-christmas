@@ -53,7 +53,7 @@ const ParticipantForm = () => {
 
         if (!formData.age) {
             newErrors.age = 'Age is required';
-        } else if (formData.age < 0 || formData.age > 120) {
+        } else if (!Number.isInteger(Number(formData.age)) || formData.age < 0 || formData.age > 120) {
             newErrors.age = 'Please enter a valid age';
         }
 
@@ -87,6 +87,12 @@ const ParticipantForm = () => {
 
         setIsSubmitting(true);
 
+        if (!user) {
+            setErrors({ submit: 'Sign in before submitting this registration.' });
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const token = await user.getIdToken();
             const response = await fetch('/api/participant-registration', {
@@ -94,14 +100,27 @@ const ParticipantForm = () => {
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ ...formData, age: Number(formData.age) })
             });
-            if (!response.ok || !(await response.json()).ok) {
-                throw new Error('Participant registration failed');
+            const result = await response.json().catch(() => null);
+            if (response.ok && result?.ok === true) {
+                setIsSubmitted(true);
+                return;
             }
 
-            setIsSubmitted(true);
+            let message = 'Participant registration is temporarily unavailable. Please try again later.';
+            if (response.status === 401 || response.status === 403) {
+                message = 'Your sign-in could not be verified. Sign out, sign in again, and retry.';
+            } else if (response.status === 400) {
+                message = 'Check the participant details, including the phone number and age, and try again.';
+            } else if (result?.code === 'registration-unconfigured') {
+                message = 'The registration server could not connect to Firebase. Contact the site administrator.';
+            }
+            setErrors({ submit: message });
         } catch (error) {
-            console.error('Error submitting form:', error);
-            setErrors({ submit: 'Failed to submit form. Please try again.' });
+            console.error('Error submitting participant registration', error.code || error.name);
+            const message = error.code?.startsWith('auth/')
+                ? 'Your sign-in could not be verified. Sign out, sign in again, and retry.'
+                : 'Could not reach the registration server. Check your connection and try again.';
+            setErrors({ submit: message });
         } finally {
             setIsSubmitting(false);
         }

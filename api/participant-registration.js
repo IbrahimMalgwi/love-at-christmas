@@ -20,13 +20,42 @@ function registrationData(body, normalizePhone) {
     return { full_name, phone, address, sex, age, religion, special_needs };
 }
 
+function configurationError() {
+    return Object.assign(new Error('Firebase Admin credentials are unavailable or invalid.'), {
+        code: 'registration/firebase-config'
+    });
+}
+
 function database() {
     if (!getApps().length) {
         const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-        if (serviceAccount) initializeApp({ credential: cert(JSON.parse(serviceAccount)) });
-        else initializeApp({ projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID });
+        const projectId = process.env.REACT_APP_FIREBASE_PROJECT_ID;
+        const useEmulators = process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FIRESTORE_EMULATOR_HOST;
+        if (process.env.VERCEL === '1' && !serviceAccount && !process.env.GOOGLE_APPLICATION_CREDENTIALS && !useEmulators) {
+            throw configurationError();
+        }
+        if (serviceAccount) {
+            try {
+                const credentials = JSON.parse(serviceAccount);
+                if (projectId && credentials.project_id !== projectId) throw configurationError();
+                initializeApp({ credential: cert(credentials), projectId });
+            } catch {
+                throw configurationError();
+            }
+        } else {
+            initializeApp({ projectId });
+        }
     }
     return getFirestore();
+}
+
+function unavailable(res, error) {
+    if (['registration/firebase-config', 'app/invalid-credential', 'app/credential-error',
+        'auth/invalid-credential', 'auth/insufficient-permission', 'auth/project-not-found',
+        7, 16, 'permission-denied', 'unauthenticated'].includes(error.code)) {
+        return res.status(503).json({ code: 'registration-unconfigured' });
+    }
+    return res.status(503).json({ code: 'registration-unavailable' });
 }
 
 async function requestBody(req) {
@@ -63,7 +92,7 @@ module.exports = async function registerParticipant(req, res) {
             return res.status(401).json({ error: 'Sign in to register.' });
         }
         console.error('Participant authentication failed', error.code || error.name);
-        return res.status(503).json({ error: 'Registration is temporarily unavailable. Please try again.' });
+        return unavailable(res, error);
     }
 
     try {
@@ -95,6 +124,6 @@ module.exports = async function registerParticipant(req, res) {
         return res.status(200).json({ ok: true });
     } catch (error) {
         console.error('Participant registration failed', error.code || error.name);
-        return res.status(503).json({ error: 'Registration is temporarily unavailable. Please try again.' });
+        return unavailable(res, error);
     }
 };

@@ -169,3 +169,11 @@ Existing records stay in place and are grouped by their original registration
 date. Undated records appear separately. Participant duplicate checks apply
 within the same year. Run the participant indexing command above if it has
 not already been run on existing records.
+
+If participant submissions report a Firebase connection error, check the
+registration function’s logs and the server environment. On Vercel, configure
+`FIREBASE_SERVICE_ACCOUNT_JSON` for the deployment’s Firebase project and
+redeploy after changing the variable. For plain `npm start` with live Firebase,
+provide server credentials in the ignored `.env.local` or through Application
+Default Credentials. Firebase web configuration alone only enables the browser
+to sign in. For emulator testing, configure both server emulator hosts.
