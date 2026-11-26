@@ -110,6 +110,8 @@ firebase emulators:start --project demo-love-at-christmas --only auth,firestore,
 REACT_APP_USE_FIREBASE_EMULATORS=true \
 REACT_APP_FIREBASE_API_KEY=demo-key \
 REACT_APP_FIREBASE_PROJECT_ID=demo-love-at-christmas \
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
 REACT_APP_FIREBASE_STORAGE_BUCKET=demo-love-at-christmas.appspot.com npm start
 ```
 
@@ -171,9 +173,20 @@ within the same year. Run the participant indexing command above if it has
 not already been run on existing records.
 
 If participant submissions report a Firebase connection error, check the
-registration function’s logs and the server environment. On Vercel, configure
-`FIREBASE_SERVICE_ACCOUNT_JSON` for the deployment’s Firebase project and
-redeploy after changing the variable. For plain `npm start` with live Firebase,
+Vercel project’s Logs for `/api/participant-registration` and HTTP 503.
+The `stage` field identifies Firebase initialization, ID token verification, or
+the Firestore transaction. An initialization failure with
+`reason: credentials-missing` means the server has no configured credentials.
+
+In the Vercel project’s Settings → Environment Variables, set
+`FIREBASE_SERVICE_ACCOUNT_JSON` to the Firebase service account JSON and mark it
+Sensitive. Set `REACT_APP_FIREBASE_PROJECT_ID` to the matching `project_id`.
+Apply both variables to Production for the live site, or to Preview for a test
+deployment using the test Firebase project. In Deployments, find the affected
+deployment, open its menu, and choose Redeploy to apply the new settings.
+If deploying a code change too, deploy the updated revision.
+
+For plain `npm start` with live Firebase,
 provide server credentials in the ignored `.env.local` or through Application
 Default Credentials. Firebase web configuration alone only enables the browser
 to sign in. For emulator testing, configure both server emulator hosts.

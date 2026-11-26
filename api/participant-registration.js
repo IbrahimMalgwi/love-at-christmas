@@ -20,9 +20,10 @@ function registrationData(body, normalizePhone) {
     return { full_name, phone, address, sex, age, religion, special_needs };
 }
 
-function configurationError() {
+function configurationError(reason) {
     return Object.assign(new Error('Firebase Admin credentials are unavailable or invalid.'), {
-        code: 'registration/firebase-config'
+        code: 'registration/firebase-config',
+        reason
     });
 }
 
@@ -32,15 +33,25 @@ function database() {
         const projectId = process.env.REACT_APP_FIREBASE_PROJECT_ID;
         const useEmulators = process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FIRESTORE_EMULATOR_HOST;
         if (process.env.VERCEL === '1' && !serviceAccount && !process.env.GOOGLE_APPLICATION_CREDENTIALS && !useEmulators) {
-            throw configurationError();
+            throw configurationError('credentials-missing');
         }
         if (serviceAccount) {
+            let credentials;
             try {
-                const credentials = JSON.parse(serviceAccount);
-                if (projectId && credentials.project_id !== projectId) throw configurationError();
+                credentials = JSON.parse(serviceAccount);
+            } catch {
+                throw configurationError('service-account-json-invalid');
+            }
+            if (!credentials || typeof credentials !== 'object') {
+                throw configurationError('service-account-invalid');
+            }
+            if (projectId && credentials.project_id !== projectId) {
+                throw configurationError('project-id-mismatch');
+            }
+            try {
                 initializeApp({ credential: cert(credentials), projectId });
             } catch {
-                throw configurationError();
+                throw configurationError('service-account-invalid');
             }
         } else {
             initializeApp({ projectId });
@@ -49,10 +60,19 @@ function database() {
     return getFirestore();
 }
 
-function unavailable(res, error) {
-    if (['registration/firebase-config', 'app/invalid-credential', 'app/credential-error',
+function unavailable(res, stage, error) {
+    const code = error?.code;
+    const configurationFailure = ['registration/firebase-config', 'app/invalid-credential', 'app/credential-error',
         'auth/invalid-credential', 'auth/insufficient-permission', 'auth/project-not-found',
-        7, 16, 'permission-denied', 'unauthenticated'].includes(error.code)) {
+        7, 16, 'permission-denied', 'unauthenticated'].includes(code);
+    const knownCode = configurationFailure || (Number.isInteger(code) && code >= 1 && code <= 16);
+    console.error('Participant registration failed', {
+        stage,
+        code: knownCode ? code : 'unknown',
+        ...(['credentials-missing', 'service-account-json-invalid', 'project-id-mismatch', 'service-account-invalid']
+            .includes(error?.reason) && { reason: error.reason })
+    });
+    if (configurationFailure) {
         return res.status(503).json({ code: 'registration-unconfigured' });
     }
     return res.status(503).json({ code: 'registration-unavailable' });
@@ -83,6 +103,11 @@ module.exports = async function registerParticipant(req, res) {
     let db;
     try {
         db = database();
+    } catch (error) {
+        return unavailable(res, 'firebase-initialization', error);
+    }
+
+    try {
         const identity = await getAuth().verifyIdToken(token, true);
         if (identity.firebase?.sign_in_provider === 'anonymous') {
             return res.status(401).json({ error: 'Sign in to register.' });
@@ -91,10 +116,10 @@ module.exports = async function registerParticipant(req, res) {
         if (['auth/argument-error', 'auth/invalid-id-token', 'auth/id-token-expired', 'auth/id-token-revoked', 'auth/user-disabled', 'auth/user-not-found'].includes(error.code)) {
             return res.status(401).json({ error: 'Sign in to register.' });
         }
-        console.error('Participant authentication failed', error.code || error.name);
-        return unavailable(res, error);
+        return unavailable(res, 'firebase-authentication', error);
     }
 
+    let stage = 'registration-preparation';
     try {
         const [{ normalizePhone, participantKey }, { currentRegistrationYear, registrationYear }] = await Promise.all([
             import('../src/shared/participantIdentity.mjs'),
@@ -107,6 +132,7 @@ module.exports = async function registerParticipant(req, res) {
         const participants = db.collection('participants');
         // The deterministic document ID makes simultaneous submissions contend on the same document.
         const record = participants.doc(`${campaignYear}-${key}`);
+        stage = 'firestore-transaction';
         await db.runTransaction(async transaction => {
             if ((await transaction.get(record)).exists) return;
             // Older records retain their original IDs after backfill.
@@ -123,7 +149,6 @@ module.exports = async function registerParticipant(req, res) {
         // Keep responses identical so this form cannot be used as a registration lookup.
         return res.status(200).json({ ok: true });
     } catch (error) {
-        console.error('Participant registration failed', error.code || error.name);
-        return unavailable(res, error);
+        return unavailable(res, stage, error);
     }
 };
