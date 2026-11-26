@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import RegistrationPage from './RegistrationPage';
@@ -27,4 +28,16 @@ test('honors the published volunteer closure for the current year', () => {
 
     expect(screen.getByRole('button', { name: 'Volunteer' }).disabled).toBe(true);
     expect(screen.getByText('Participant form')).toBeTruthy();
+});
+
+test.each([
+    { campaign: null, loading: true, error: false },
+    { campaign: null, loading: false, error: true }
+])('opens the volunteer form while campaign availability is unknown', state => {
+    useCampaign.mockReturnValue(state);
+    render(<RegistrationPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volunteer' }));
+    expect(screen.getByText('Volunteer form')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Registration form' })).toHaveFocus();
 });

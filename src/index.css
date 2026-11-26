@@ -323,3 +323,13 @@ body { background: var(--cream); color: var(--ink); font: 1rem/1.65 'Segoe UI', 
 .portal-sign-in h1 { margin-block: 1rem .5rem; font: 500 2rem/1.1 var(--display); color: var(--green); }
 .portal-sign-in form { margin-top: 1.5rem; }
 .portal-sign-in form .button { width: 100%; }
+
+.registration-details { max-width: 42rem; }
+.registration-details dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: .75rem 1.5rem;
+}
+.registration-details dl > div { border-top: 1px solid var(--line); padding-block: .55rem; }
+.registration-details dt { font-weight: 700; }
+.registration-details dd { color: var(--muted); overflow-wrap: anywhere; white-space: pre-wrap; }

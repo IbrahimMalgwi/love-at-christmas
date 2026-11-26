@@ -1,14 +1,27 @@
 import { currentRegistrationYear, registrationDate, registrationYear } from '../../shared/registrationYear.mjs';
 import { normalizePhone } from '../../shared/participantIdentity.mjs';
+import RegistrationDetails from './RegistrationDetails';
 import ReadError from '../../components/common/ReadError';
 import Papa from 'papaparse';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
 
 const RegistrationsManager = () => {
     const [activeTab, setActiveTab] = useState('volunteers');
     const year = currentRegistrationYear();
     const [selectedYear, setSelectedYear] = useState(String(year));
+    const [selection, setSelection] = useState(null);
+    const detailsTrigger = useRef(null);
+
+    function viewDetails(event, type, record) {
+        detailsTrigger.current = event.currentTarget;
+        setSelection({ type, record });
+    }
+
+    function closeDetails() {
+        setSelection(null);
+        detailsTrigger.current?.focus();
+    }
     const [volunteers, setVolunteers] = useState([]);
     const [participants, setParticipants] = useState([]);
     const [filteredVolunteers, setFilteredVolunteers] = useState([]);
@@ -275,9 +288,9 @@ const RegistrationsManager = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-3">
                 <h2 className="text-2xl font-bold text-gray-900">Registrations Management</h2>
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {/* Items per page selector */}
                     <select
                         value={itemsPerPage}
@@ -314,7 +327,7 @@ const RegistrationsManager = () => {
                             onClick={() => exportToCSV(annualVolunteers, 'volunteers')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
-                            Export CSV
+                            Export {selectedYear === 'undated' ? 'undated' : selectedYear} CSV
                         </button>
                     )}
                     {activeTab === 'participants' && (
@@ -322,7 +335,7 @@ const RegistrationsManager = () => {
                             onClick={() => exportToCSV(annualParticipants, 'participants')}
                             className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
                         >
-                            Export CSV
+                            Export {selectedYear === 'undated' ? 'undated' : selectedYear} CSV
                         </button>
                     )}
                 </div>
@@ -425,6 +438,11 @@ const RegistrationsManager = () => {
                                 <tr key={volunteer.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{volunteer.full_name || 'N/A'}</div>
+                                        <button type="button" className="text-link mt-1"
+                                            onClick={event => viewDetails(event, 'Volunteer', volunteer)}
+                                            aria-label={`View details for ${volunteer.full_name || 'volunteer'}`}>
+                                            View details
+                                        </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900">{volunteer.email || 'N/A'}</div>
@@ -513,13 +531,18 @@ const RegistrationsManager = () => {
                                 <tr key={participant.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{participant.full_name || 'N/A'}</div>
+                                        <button type="button" className="text-link mt-1"
+                                            onClick={event => viewDetails(event, 'Participant', participant)}
+                                            aria-label={`View details for ${participant.full_name || 'participant'}`}>
+                                            View details
+                                        </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {participant.phone || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900 capitalize">{participant.sex || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">Age: {participant.age || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">Age: {participant.age ?? 'N/A'}</div>
                                         <div className="text-sm text-gray-500">{participant.religion || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -566,6 +589,7 @@ const RegistrationsManager = () => {
                     <PaginationControls />
                 </div>
             )}
+            <RegistrationDetails selection={selection} onClose={closeDetails} />
         </div>
     );
 };

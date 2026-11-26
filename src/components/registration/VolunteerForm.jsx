@@ -96,7 +96,11 @@ const VolunteerForm = () => {
             });
         } catch (error) {
             console.error('Error submitting form:', error);
-            setErrors({ submit: 'Failed to submit form. Please try again.' });
+            setErrors({
+                submit: error.code === 'permission-denied'
+                    ? 'Volunteer registration could not be submitted. Check that you are signed in and that registration is open.'
+                    : 'Failed to submit form. Please try again.'
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -186,7 +190,7 @@ const VolunteerForm = () => {
             />
 
             {errors.submit && (
-                <div className="text-red-600 text-sm">{errors.submit}</div>
+                <div role="alert" className="text-red-600 text-sm">{errors.submit}</div>
             )}
 
             <button
