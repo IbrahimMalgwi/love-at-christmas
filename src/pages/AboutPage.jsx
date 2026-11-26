@@ -5,7 +5,7 @@ export default function AboutPage() {
     return (
         <div className="site-wrap section-spacing">
             <header className="page-heading">
-                <p className="eyebrow">Foursquare Gospel Church Sabo</p>
+                <p className="eyebrow">Foursquare Gospel Church Sabo.</p>
                 <h1>About Love at Christmas</h1>
                 <p>Love at Christmas is a Christmas outreach of Foursquare Gospel Church Sabo in Lagos.</p>
             </header>
