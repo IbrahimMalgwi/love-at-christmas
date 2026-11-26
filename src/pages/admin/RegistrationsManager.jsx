@@ -1,7 +1,10 @@
+import participantIdentity from '../../shared/participantIdentity.cjs';
 import ReadError from '../../components/common/ReadError';
 import Papa from 'papaparse';
 import React, { useState, useEffect, useCallback } from 'react';
 import { firestoreService, collections } from '../../services/firestore';
+
+const { normalizePhone } = participantIdentity;
 
 const RegistrationsManager = () => {
     const [activeTab, setActiveTab] = useState('volunteers');
@@ -24,7 +27,8 @@ const RegistrationsManager = () => {
             return;
         }
 
-        const lowerSearch = searchTerm.toLowerCase();
+        const lowerSearch = searchTerm.trim().toLowerCase();
+        const exactPhone = normalizePhone(searchTerm);
 
         setFilteredVolunteers(
             volunteers.filter(volunteer =>
@@ -40,6 +44,7 @@ const RegistrationsManager = () => {
             participants.filter(participant =>
                 participant.full_name?.toLowerCase().includes(lowerSearch) ||
                 participant.phone?.toLowerCase().includes(lowerSearch) ||
+                (exactPhone && normalizePhone(participant.phone) === exactPhone) ||
                 participant.address?.toLowerCase().includes(lowerSearch) ||
                 participant.religion?.toLowerCase().includes(lowerSearch)
             )

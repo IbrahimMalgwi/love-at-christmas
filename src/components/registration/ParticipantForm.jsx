@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { firestoreService, collections } from '../../services/firestore';
+import participantIdentity from '../../shared/participantIdentity.cjs';
 import FormInput from '../forms/FormInput';
+
+const { normalizePhone } = participantIdentity;
 
 const ParticipantForm = () => {
     const [formData, setFormData] = useState({
@@ -37,7 +39,7 @@ const ParticipantForm = () => {
 
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone number is required';
-        } else if (!/^\+234\d{10}$|^0\d{10}$/.test(formData.phone.replace(/\s/g, ''))) {
+        } else if (!normalizePhone(formData.phone)) {
             newErrors.phone = 'Please enter a valid Nigerian phone number';
         }
 
@@ -81,15 +83,19 @@ const ParticipantForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if (isSubmitting || !validateForm()) return;
 
         setIsSubmitting(true);
 
         try {
-            await firestoreService.add(collections.PARTICIPANTS, {
-                ...formData,
-                age: parseInt(formData.age)
+            const response = await fetch('/api/participant-registration', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...formData, age: Number(formData.age) })
             });
+            if (!response.ok || !(await response.json()).ok) {
+                throw new Error('Participant registration failed');
+            }
 
             setIsSubmitted(true);
         } catch (error) {
@@ -118,9 +124,9 @@ const ParticipantForm = () => {
         return (
             <div className="text-center py-8" role="status">
                 <div className="text-green-600 text-6xl mb-4">✅</div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration received</h2>
                 <p className="text-gray-600 mb-4">
-                    Thank you for registering as a participant in Love at Christmas.
+                    If we already had a registration with this name and phone number, we kept the existing record.
                 </p>
                 <p className="text-sm text-gray-500 mb-8">
                     We'll contact you with details about the event and how to receive your Christmas package.

@@ -126,3 +126,28 @@ REACT_APP_FIREBASE_STORAGE_BUCKET=demo-love-at-christmas.appspot.com npm start
 
 The emulator switch requires a development build and a project ID beginning with
 `demo-`. Use an Auth emulator account with the `admin` custom claim to test publishing.
+
+### Participant duplicate checks
+
+Participant registration uses the Vercel function at
+`/api/participant-registration`. Submissions are matched by normalized full name
+and Nigerian phone number across the existing participant collection. Different
+names can share a number. The form gives the same confirmation for a new and
+an existing registration to keep registration status private.
+
+Set `FIREBASE_SERVICE_ACCOUNT_JSON` as a **server-only**, sensitive Vercel
+environment variable for the same Firebase project as the web app. Never use a
+`REACT_APP_` prefix for this credential. The `npm start` development server mounts the same handler locally. `vercel dev`
+can also run the frontend and function together. For isolated local data, set
+`FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` and use the demo project environment
+described above.
+
+For rollout, deploy the new Firestore rules to stop the legacy public write
+path, then index existing participant records before switching traffic to the
+new registration form. There can be a short registration interruption during
+this transition. The index command is safe to rerun and keeps existing document
+IDs and timestamps. Review any skipped records whose name or phone needs correction.
+
+```sh
+node scripts/firebase-maintenance.cjs index-participants PROJECT_ID
+```
