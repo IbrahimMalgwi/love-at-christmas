@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 'admin' in request.auth.token && request.auth.token.admin == true;
+    }
+
+    function registrationFields(fields) {
+      return request.resource.data.keys().hasOnly(fields.concat(['createdAt', 'updatedAt']))
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function text(value, maximum) {
+      return value is string && value.size() > 0 && value.size() <= maximum;
+    }
+
+    function registrationYear() {
+      return (request.time + duration.value(1, 'h')).year();
+    }
+
+    function volunteersOpen() {
+      let campaign = /databases/$(database)/documents/campaign/published;
+      return !exists(campaign)
+        || get(campaign).data.get('volunteerRegistrationYear', 0) != registrationYear()
+        || get(campaign).data.get('volunteerOpen', true) != false;
+    }
+
+    match /campaign/published {
+      allow get: if true;
+      allow write: if isAdmin();
+    }
+
+    match /campaign/draft {
+      allow read, write: if isAdmin();
+    }
+
+    match /faq_drafts/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /volunteers/{id} {
+      allow create: if isAdmin() || (
+        isSignedIn() && volunteersOpen() && registrationFields(['full_name', 'email', 'phone', 'church', 'role', 'additional_comments', 'campaignYear'])
+        && request.resource.data.get('campaignYear', registrationYear()) == registrationYear()
+        && text(request.resource.data.full_name, 200)
+        && text(request.resource.data.email, 320)
+        && text(request.resource.data.phone, 30)
+        && text(request.resource.data.church, 300)
+        && text(request.resource.data.role, 100)
+        && request.resource.data.get('additional_comments', '') is string
+        && request.resource.data.get('additional_comments', '').size() <= 4000
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /participants/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /public_stats/impact {
+      allow get: if isAdmin();
+    }
+
+    match /{collection}/{id} {
+      allow read: if collection in ['faqs', 'gallery_categories', 'gallery_images'];
+      allow read, write: if isAdmin()
+        && collection in ['items_inventory', 'faqs', 'gallery_categories', 'gallery_images', 'items_received'];
+    }
+  }
+}
