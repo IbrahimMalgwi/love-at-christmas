@@ -165,10 +165,11 @@ registration page. Volunteer registration defaults to open each new year.
 Administrators can close it for the current year by updating and publishing
 the Campaign settings.
 
-Registrations use the calendar year in Lagos. The dashboard defaults to the
-current year, with a separate selection and CSV export for previous years.
-Existing records stay in place and are grouped by their original registration
-date. Undated records appear separately. Participant duplicate checks apply
+Registrations use the calendar year in Lagos. The dashboard shows all years
+by default, grouped by campaign year with the newest year first. Use the
+campaign year filter to view and export a specific year. Older records without
+a campaign year are grouped by their registration date. Undated records
+appear separately. Participant duplicate checks apply
 within the same year. Run the participant indexing command above if it has
 not already been run on existing records.
 

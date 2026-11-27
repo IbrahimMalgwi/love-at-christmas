@@ -46,17 +46,22 @@ test('filters both lists by year and opens the selected registration details', a
     expect(within(dialog).getByText('0')).toBeTruthy();
 });
 
-test('shows previous and undated participants when the current year is empty', async () => {
-    const year = currentRegistrationYear();
+test('groups current, previous, and undated participants by default', async () => {
     firestoreService.getAll.mockImplementation(async collection => collection === collections.PARTICIPANTS ? [
-        { id: 'past', full_name: 'Past Participant', campaignYear: year - 1 },
+        { id: 'past', full_name: 'Past Participant', created_at: '2025-12-13T10:00:00Z' },
+        { id: 'current', full_name: 'Current Participant', campaignYear: 2026 },
         { id: 'undated', full_name: 'Undated Participant' }
     ] : []);
 
     render(<RegistrationsManager />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Show registrations from all years' }));
+    const table = await screen.findByRole('table');
 
     expect(screen.getByLabelText('Campaign year')).toHaveValue('all');
-    expect(screen.getByRole('button', { name: 'View details for Past Participant' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'View details for Undated Participant' })).toBeVisible();
+    const [, current, past, undated] = within(table).getAllByRole('rowgroup');
+    expect(current).toHaveTextContent('2026');
+    expect(current).toHaveTextContent('Current Participant');
+    expect(past).toHaveTextContent('2025');
+    expect(past).toHaveTextContent('Past Participant');
+    expect(undated).toHaveTextContent('Undated records');
+    expect(undated).toHaveTextContent('Undated Participant');
 });

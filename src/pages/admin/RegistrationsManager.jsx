@@ -9,7 +9,7 @@ import { firestoreService, collections } from '../../services/firestore';
 const RegistrationsManager = () => {
     const [activeTab, setActiveTab] = useState('participants');
     const year = currentRegistrationYear();
-    const [selectedYear, setSelectedYear] = useState(String(year));
+    const [selectedYear, setSelectedYear] = useState('all');
     const [selection, setSelection] = useState(null);
     const detailsTrigger = useRef(null);
 
@@ -98,7 +98,8 @@ const RegistrationsManager = () => {
                 firestoreService.getAll(collections.PARTICIPANTS, null)
             ]);
 
-            const newestFirst = (first, second) => (registrationDate(second)?.getTime() ?? 0)
+            const newestFirst = (first, second) => (registrationYear(second) ?? -Infinity)
+                - (registrationYear(first) ?? -Infinity) || (registrationDate(second)?.getTime() ?? 0)
                 - (registrationDate(first)?.getTime() ?? 0);
             setVolunteers(volunteersData.sort(newestFirst));
             setParticipants(participantsData.sort(newestFirst));
@@ -278,6 +279,12 @@ const RegistrationsManager = () => {
     }
 
     const displayItems = getCurrentItems();
+    const yearGroups = new Map();
+    for (const record of displayItems) {
+        const recordYear = registrationYear(record);
+        if (!yearGroups.has(recordYear)) yearGroups.set(recordYear, []);
+        yearGroups.get(recordYear).push(record);
+    }
     const hasRegistrations = (activeTab === 'volunteers' ? volunteers : participants).length > 0;
     const showAllYears = selectedYear !== 'all' && hasRegistrations && !searchTerm;
     const exportScope = selectedYear === 'all' ? 'all years' : selectedYear;
@@ -437,61 +444,68 @@ const RegistrationsManager = () => {
                                 </th>
                             </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {displayItems.map((volunteer) => (
-                                <tr key={volunteer.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{volunteer.full_name || 'N/A'}</div>
-                                        <button type="button" className="text-link mt-1"
-                                            onClick={event => viewDetails(event, 'Volunteer', volunteer)}
-                                            aria-label={`View details for ${volunteer.full_name || 'volunteer'}`}>
-                                            View details
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{volunteer.email || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">{volunteer.phone || 'N/A'}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {volunteer.church || 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
-                        {volunteer.role || 'Unspecified'}
-                      </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-500 max-w-xs">
-                                            {volunteer.additional_comments || '-'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {volunteer.createdAt?.toDate
-                                            ? new Date(volunteer.createdAt.toDate()).toLocaleDateString()
-                                            : volunteer.created_at
-                                                ? new Date(volunteer.created_at).toLocaleDateString()
-                                                : 'N/A'
-                                        }
-                                        <div className="text-xs text-gray-400">
-                                            {volunteer.createdAt?.toDate
-                                                ? new Date(volunteer.createdAt.toDate()).toLocaleTimeString()
-                                                : volunteer.created_at
-                                                    ? new Date(volunteer.created_at).toLocaleTimeString()
-                                                    : ''
-                                            }
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button
-                                            onClick={() => deleteRegistration('volunteer', volunteer.id)}
-                                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
+                            {Array.from(yearGroups, ([groupYear, records]) => (
+                                <tbody key={groupYear ?? 'undated'} className="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <th scope="rowgroup" colSpan={7} className="bg-gray-100 px-6 py-3 text-left">
+                                            {groupYear ?? 'Undated records'}
+                                        </th>
+                                    </tr>
+                                    {records.map((volunteer) => (
+                                        <tr key={volunteer.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{volunteer.full_name || 'N/A'}</div>
+                                                <button type="button" className="text-link mt-1"
+                                                    onClick={event => viewDetails(event, 'Volunteer', volunteer)}
+                                                    aria-label={`View details for ${volunteer.full_name || 'volunteer'}`}>
+                                                    View details
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{volunteer.email || 'N/A'}</div>
+                                                <div className="text-sm text-gray-500">{volunteer.phone || 'N/A'}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {volunteer.church || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
+                                {volunteer.role || 'Unspecified'}
+                              </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-500 max-w-xs">
+                                                    {volunteer.additional_comments || '-'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {volunteer.createdAt?.toDate
+                                                    ? new Date(volunteer.createdAt.toDate()).toLocaleDateString()
+                                                    : volunteer.created_at
+                                                        ? new Date(volunteer.created_at).toLocaleDateString()
+                                                        : 'N/A'
+                                                }
+                                                <div className="text-xs text-gray-400">
+                                                    {volunteer.createdAt?.toDate
+                                                        ? new Date(volunteer.createdAt.toDate()).toLocaleTimeString()
+                                                        : volunteer.created_at
+                                                            ? new Date(volunteer.created_at).toLocaleTimeString()
+                                                            : ''
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button
+                                                    onClick={() => deleteRegistration('volunteer', volunteer.id)}
+                                                    className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
                             ))}
-                            </tbody>
                         </table>
                     </div>
 
@@ -530,62 +544,69 @@ const RegistrationsManager = () => {
                                 </th>
                             </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {displayItems.map((participant) => (
-                                <tr key={participant.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{participant.full_name || 'N/A'}</div>
-                                        <button type="button" className="text-link mt-1"
-                                            onClick={event => viewDetails(event, 'Participant', participant)}
-                                            aria-label={`View details for ${participant.full_name || 'participant'}`}>
-                                            View details
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {participant.phone || 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 capitalize">{participant.sex || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">Age: {participant.age ?? 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">{participant.religion || 'N/A'}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900 max-w-xs">
-                                            {participant.address || 'N/A'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-500 max-w-xs">
-                                            {participant.special_needs || '-'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {participant.createdAt?.toDate
-                                            ? new Date(participant.createdAt.toDate()).toLocaleDateString()
-                                            : participant.created_at
-                                                ? new Date(participant.created_at).toLocaleDateString()
-                                                : 'N/A'
-                                        }
-                                        <div className="text-xs text-gray-400">
-                                            {participant.createdAt?.toDate
-                                                ? new Date(participant.createdAt.toDate()).toLocaleTimeString()
-                                                : participant.created_at
-                                                    ? new Date(participant.created_at).toLocaleTimeString()
-                                                    : ''
-                                            }
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button
-                                            onClick={() => deleteRegistration('participant', participant.id)}
-                                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
+                            {Array.from(yearGroups, ([groupYear, records]) => (
+                                <tbody key={groupYear ?? 'undated'} className="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <th scope="rowgroup" colSpan={7} className="bg-gray-100 px-6 py-3 text-left">
+                                            {groupYear ?? 'Undated records'}
+                                        </th>
+                                    </tr>
+                                    {records.map((participant) => (
+                                        <tr key={participant.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{participant.full_name || 'N/A'}</div>
+                                                <button type="button" className="text-link mt-1"
+                                                    onClick={event => viewDetails(event, 'Participant', participant)}
+                                                    aria-label={`View details for ${participant.full_name || 'participant'}`}>
+                                                    View details
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {participant.phone || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900 capitalize">{participant.sex || 'N/A'}</div>
+                                                <div className="text-sm text-gray-500">Age: {participant.age ?? 'N/A'}</div>
+                                                <div className="text-sm text-gray-500">{participant.religion || 'N/A'}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900 max-w-xs">
+                                                    {participant.address || 'N/A'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-500 max-w-xs">
+                                                    {participant.special_needs || '-'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {participant.createdAt?.toDate
+                                                    ? new Date(participant.createdAt.toDate()).toLocaleDateString()
+                                                    : participant.created_at
+                                                        ? new Date(participant.created_at).toLocaleDateString()
+                                                        : 'N/A'
+                                                }
+                                                <div className="text-xs text-gray-400">
+                                                    {participant.createdAt?.toDate
+                                                        ? new Date(participant.createdAt.toDate()).toLocaleTimeString()
+                                                        : participant.created_at
+                                                            ? new Date(participant.created_at).toLocaleTimeString()
+                                                            : ''
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button
+                                                    onClick={() => deleteRegistration('participant', participant.id)}
+                                                    className="text-red-600 hover:text-red-900 px-3 py-1 rounded hover:bg-red-50"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
                             ))}
-                            </tbody>
                         </table>
                     </div>
 
